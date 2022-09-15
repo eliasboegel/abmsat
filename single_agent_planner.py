@@ -118,6 +118,8 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     root = {'loc': start_loc, 'g_val': 0, 'h_val': h_value, 'parent': None}
     push_node(open_list, root)
     closed_list[(root['loc'])] = root
+    dims = (len(my_map), len(my_map[0]))
+
     while len(open_list) > 0:
         curr = pop_node(open_list)
         #############################
@@ -125,20 +127,22 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         if curr['loc'] == goal_loc:
             return get_path(curr)
         for dir in range(4):
+            a = curr['loc']
             child_loc = move(curr['loc'], dir)
-            if my_map[child_loc[0]][child_loc[1]]:
-                continue
-            child = {'loc': child_loc,
-                    'g_val': curr['g_val'] + 1,
-                    'h_val': h_values[child_loc],
-                    'parent': curr}
-            if (child['loc']) in closed_list:
-                existing_node = closed_list[(child['loc'])]
-                if compare_nodes(child, existing_node):
+            if -1<child_loc[0]<dims[0] and -1<child_loc[1]<dims[1]:
+                if my_map[child_loc[0]][child_loc[1]]:
+                    continue
+                child = {'loc': child_loc,
+                        'g_val': curr['g_val'] + 1,
+                        'h_val': h_values[child_loc],
+                        'parent': curr}
+                if (child['loc']) in closed_list:
+                    existing_node = closed_list[(child['loc'])]
+                    if compare_nodes(child, existing_node):
+                        closed_list[(child['loc'])] = child
+                        push_node(open_list, child)
+                else:
                     closed_list[(child['loc'])] = child
                     push_node(open_list, child)
-            else:
-                closed_list[(child['loc'])] = child
-                push_node(open_list, child)
 
     return None  # Failed to find solutions
