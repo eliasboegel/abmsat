@@ -11,17 +11,9 @@ def detect_collision(path1, path2):
     #           A vertex collision occurs if both robots occupy the same location at the same timestep
     #           An edge collision occurs if the robots swap their location at the same timestep.
     #           You should use "get_location(path, t)" to get the location of a robot at time t.
-    for t in range(min(len(path1), len(path2))):
-        pos1 = get_location(path1, t)
-        pos2 = get_location(path2, t)
-        rel_pos = (pos2[0] - pos1[0], pos2[1] - pos1[1])
-        
-        if rel_pos == (0,0):
-            return {'loc': [pos1], 'timestep': t}
-        elif (abs(rel_pos[0]) + abs(rel_pos[1])) == 1:
-            return {'loc': [pos1, pos2], 'timestep': t}
-        else:
-            return None
+
+    pass
+
 
 def detect_collisions(paths):
     ##############################
@@ -29,15 +21,9 @@ def detect_collisions(paths):
     #           A collision can be represented as dictionary that contains the id of the two robots, the vertex or edge
     #           causing the collision, and the timestep at which the collision occurred.
     #           You should use your detect_collision function to find a collision between two robots.
-    collisions = []
-    for i in range(len(paths) - 1):
-        for j in range(i + 1, len(paths)):
-            collision = detect_collision(paths[i], paths[j])
-            if collision is not None:
-                collision['a1'] = i
-                collision['a2'] = j
-                collisions.append(collision)
-    return collisions
+
+    pass
+
 
 def standard_splitting(collision):
     ##############################
@@ -48,9 +34,8 @@ def standard_splitting(collision):
     #           Edge collision: the first constraint prevents the first agent to traverse the specified edge at the
     #                          specified timestep, and the second constraint prevents the second agent to traverse the
     #                          specified edge at the specified timestep
-    constraint1 = {'agent': collision['a1'], 'loc': collision['loc'][len(collision['loc']) - 1], 'timestep': collision['timestep']}
-    constraint2 = {'agent': collision['a2'], 'loc': collision['loc'][0], 'timestep': collision['timestep']}
-    return [constraint1, constraint2]
+
+    pass
 
 
 def disjoint_splitting(collision):
@@ -132,12 +117,12 @@ class CBSSolver(object):
         self.push_node(root)
 
         # Task 3.1: Testing
-        #print(f"Collisions: {root['collisions']}")
+        print(root['collisions'])
 
         # Task 3.2: Testing
-        #for collision in root['collisions']:
-        #    print(f"Constraints: {standard_splitting(collision)}")
-            
+        for collision in root['collisions']:
+            print(standard_splitting(collision))
+
         ##############################
         # Task 3.3: High-Level Search
         #           Repeat the following as long as the open list is not empty:
@@ -147,27 +132,8 @@ class CBSSolver(object):
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
 
-        while self.open_list: # While not empty
-            p = self.pop_node()
-            p['collisions'] = detect_collisions(p['paths'])
-            if not p['collisions']: # No collisions
-                return p['paths']
-            collision = p['collisions'][0]
-            constraints = standard_splitting(collision)
-            for new_constraint in constraints:
-                q = {'constraints': p['constraints'] + [new_constraint],
-                     'paths': p['paths'].copy()}
-                agent = new_constraint['agent']
-                path = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
-                if path: # If not empty
-                    q['paths'][agent] = path
-                    q['collisions'] = detect_collisions(q['paths'])
-                    q['cost'] = get_sum_of_cost(q['paths'])
-                    self.push_node(q)
-        
-
-        #self.print_results(root)
-        #return root['paths']
+        self.print_results(root)
+        return root['paths']
 
 
     def print_results(self, node):
