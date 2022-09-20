@@ -99,6 +99,14 @@ def compare_nodes(n1, n2):
     return n1['g_val'] + n1['h_val'] < n2['g_val'] + n2['h_val']
 
 
+def node_constructor(loc, g_val, h_val, time_step, parent):
+    node = {'loc': loc,
+            'g_val': g_val,
+            'h_val': h_val,
+            'time_step': time_step,
+            'parent': parent}
+    return node
+
 def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     """ my_map      - binary obstacle map
         start_loc   - start position
@@ -115,7 +123,12 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     closed_list = dict()
     earliest_goal_timestep = 0
     h_value = h_values[start_loc]
-    root = {'loc': start_loc, 'g_val': 0, 'h_val': h_value, 'parent': None}
+    root = node_constructor(start_loc, 0, h_value, 0, None)
+    # root = {'loc': start_loc, 
+    #         'g_val': 0,
+    #         'h_val': h_value,
+    #         'time_step': 0,
+    #         'parent': None}
     push_node(open_list, root)
     closed_list[(root['loc'])] = root
     dims = (len(my_map), len(my_map[0]))
@@ -132,10 +145,11 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
             if -1<child_loc[0]<dims[0] and -1<child_loc[1]<dims[1]:
                 if my_map[child_loc[0]][child_loc[1]]:
                     continue
-                child = {'loc': child_loc,
-                        'g_val': curr['g_val'] + 1,
-                        'h_val': h_values[child_loc],
-                        'parent': curr}
+                # child = {'loc': child_loc,
+                #         'g_val': curr['g_val'] + 1,
+                #         'h_val': h_values[child_loc],
+                #         'parent': curr}
+                child = node_constructor(child_loc, curr['g_val'] + 1, h_values[child_loc], curr['time_step'] + 1, curr)
                 if (child['loc']) in closed_list:
                     existing_node = closed_list[(child['loc'])]
                     if compare_nodes(child, existing_node):
