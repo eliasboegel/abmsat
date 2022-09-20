@@ -1,5 +1,5 @@
 import time as timer
-from single_agent_planner import compute_heuristics, a_star, get_sum_of_cost
+from single_agent_planner import compute_heuristics, a_star, get_sum_of_cost, get_location
 
 
 class PrioritizedPlanningSolver(object):
@@ -31,6 +31,9 @@ class PrioritizedPlanningSolver(object):
         constraints = []
 
         for i in range(self.num_of_agents):  # Find path for each agent
+            print(f'\n-------------Planning for agent {i}-------------')
+            
+            # print(f'constraints applying to agent {i}: {constraints}\n\n')
             path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
                           i, constraints)
             if path is None:
@@ -43,14 +46,36 @@ class PrioritizedPlanningSolver(object):
             #            * path contains the solution path of the current (i'th) agent, e.g., [(1,1),(1,2),(1,3)]
             #            * self.num_of_agents has the number of total agents
             #            * constraints: array of constraints to consider for future A* searches
+            print(f'agent {i} has path: {path}\n\n')
+            constraint = []
+
+            for j in range(len(path)):
+                for k in range(i+1, self.num_of_agents):
+                    if j == (len(path)-1):
+                        for l in range(8):
+                            loc = [get_location(path, j+l)]
+                            agent = k
+                            constraint_dict = {'agent': agent,
+                                               'loc': loc,
+                                               'timestep': j+l}     
+                            constraint.append(constraint_dict)
+                        continue
+                    loc = [get_location(path, j)]
+                    agent = k
+                    constraint_dict = {'agent': agent,
+                                       'loc': loc,
+                                       'timestep': j}   
+                    constraint.append(constraint_dict)
+
+            constraints = constraints + constraint
 
 
             ##############################
-
+        print(f'this is result {result}')
         self.CPU_time = timer.time() - start_time
 
-        print("\n Found a solution! \n")
-        print("CPU time (s):    {:.2f}".format(self.CPU_time))
+        print("\nFound a solution!\n")
+        print("CPU time (s):    {:.10f}".format(self.CPU_time))
         print("Sum of costs:    {}".format(get_sum_of_cost(result)))
         print(result)
         return result
