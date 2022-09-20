@@ -5,7 +5,7 @@ from matplotlib.patches import Circle, Rectangle
 import numpy as np
 from matplotlib import animation
 
-Colors = ['green', 'blue', 'orange']
+Colors = ['green', 'blue', 'orange', 'dodgerblue', 'purple', 'pink', 'brown', 'yellow', 'black']
 
 
 class Animation:
