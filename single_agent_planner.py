@@ -71,13 +71,6 @@ def get_path(goal_node):
 
 
 def push_node(open_list, node):
-    a = node['g_val']
-    b = node['h_val']
-    c = node['loc']
-    d = node
-    e = open_list
-    print(f'a: {a}')
-    print(f'eee: {(a+b,b,c,d)}')
     heapq.heappush(open_list, (node['g_val'] + node['h_val'], node['h_val'], node['loc'], node))
 
 
