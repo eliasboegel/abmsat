@@ -63,9 +63,28 @@ def disjoint_splitting(collision):
     #                          specified timestep, and the second constraint prevents the same agent to traverse the
     #                          specified edge at the specified timestep
     #           Choose the agent randomly
-
-    pass
-
+    
+    # Randomly select one agent as "agent1" and the other as "agent2"
+    agent1 = random.randrange(0, 2)
+    agent2 = 0 if agent1 else 1
+    
+    # Force move away from current location
+    constraints1 = [{'agent': agent1, 'loc': collision['loc'][0], 'timestep': collision['timestep']}]
+    
+    # Constrain all directions but the one in which agent1 is forced into
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            if abs(i) == abs(j): continue # Filter out diagonal movement
+            loc = (collision['loc'][0][0] + i, collision['loc'][0][0] + j)   
+            if loc != collision['loc'][1]:
+                constraints1.append({'agent': agent1, 'loc': loc, 'timestep': collision['timestep']})
+    
+    # Prevent agent2 from moving over the edge or into the vertex into which agent1 moves
+    constraint2 = [{'agent': agent2, 'loc': collision['loc'], 'timestep': collision['timestep']}]
+    
+    # Return complete list of constraints
+    return constraints1 + constraint2
+    
 
 class CBSSolver(object):
     """The high-level search of CBS."""
@@ -153,7 +172,7 @@ class CBSSolver(object):
             if not p['collisions']: # No collisions
                 return p['paths']
             collision = p['collisions'][0]
-            constraints = standard_splitting(collision)
+            constraints = disjoint_splitting(collision) if disjoint else standard_splitting(collision)
             for new_constraint in constraints:
                 q = {'constraints': p['constraints'] + [new_constraint],
                      'paths': p['paths'].copy()}
