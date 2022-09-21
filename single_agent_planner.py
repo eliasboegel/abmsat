@@ -98,22 +98,32 @@ def is_constrained(curr_loc, child_loc, next_time, constraint_table): # badly wr
     # Task 1.2/1.3: Check if a move from curr_loc to next_loc at time step next_time violates
     #               any given constraint. For efficiency the constraints are indexed in a constraint_table
     #               by time step, see build_constraint_table.
+    
+    blocked_loc = [(0,0)]
     constrained = 0
-    blocked_loc = (0,0)
 
-    edge_key = (child_loc, next_time-1) # key for checking if edge is blocked
-    vertex_key = (child_loc, next_time) # key for checking if vertex is blocked
-    if edge_key in constraint_table:
-        blocked_loc = constraint_table[edge_key]['loc'][0]
-        constrained = 'stand'
-    elif vertex_key in constraint_table:
-        blocked_loc = constraint_table[vertex_key]['loc'][0]
-        constrained = 'move'
-            
+    vertex_key = (child_loc, next_time)
+    edge_key = (curr_loc, next_time)
+
+    # handling vertex constraint
+    if vertex_key in constraint_table:
+        constraint = constraint_table[vertex_key]
+        constrained = 'vertex'
+        blocked_loc = constraint[constrained]
+        return constrained, blocked_loc
+
+    # handling edge constraint
+    elif edge_key in constraint_table:
+        constraint = constraint_table[edge_key]
+        constrained = 'edge'
+        blocked_loc = constraint[constrained]
+        return constrained, blocked_loc
     return constrained, blocked_loc
+    
 
 
-def build_constraint_table(constraints, agent):
+
+def build_constraint_table(constraints, agent): # need to build the constraint key to be (loc1, loc2, timestep)
     ##############################
     # Task 1.2/1.3: Return a table that contains the list of constraints of
     #               the given agent for each time step. The table can be used
@@ -122,10 +132,11 @@ def build_constraint_table(constraints, agent):
     table = dict()
     for i in constraints:
         if i['agent'] == agent:
-            smaller_constraint = {'loc': i['loc'],
-                                  'timestep': i['timestep']}
-            constraint_key = (i['loc'][0], i['timestep'])
-            table[constraint_key] = smaller_constraint
+            tuples_list = i['loc']
+            constraint_key = ((tuples_list[-1], i['timestep']))
+            constraint = {'edge': [tuples_list[0], tuples_list[-1]],
+                          'vertex':[tuples_list[-1]]}
+            table[constraint_key] = constraint
     return table
 
 
@@ -142,7 +153,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     open_list = []
     closed_list = dict()
     constraint_table = build_constraint_table(constraints, agent)
-    print(f'constraint table: {constraint_table}')
+    # print(f'constraint table: {constraint_table}')
 
     # setting up root node and adding it to open and closed list, to initiate the algorithm
     h_value = h_values[start_loc]
@@ -159,11 +170,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     while len(open_list) > 0:
         curr = pop_node(open_list)
         curr_loc = curr['loc']
-        curr_time = curr['timestep']
         child_time = curr['timestep'] + 1
-
-        print(f'moved to {curr_loc}')
-        print(f'\n\ncurrently at {curr_loc} at time {curr_time}')
 
         curr_cost = curr['g_val']+curr['h_val']
         #############################
@@ -173,45 +180,41 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
 
         for dir in range(5): # exploring all five moves that can be taken from the current location
             child_loc = move(curr['loc'], dir)
-            print(f'\nChecking for direction: {move((0,0), dir)} (moving to {child_loc})')
             
             if -1<child_loc[0]<dims[0] and -1<child_loc[1]<dims[1]: # checking if the child location is within the map
                 if my_map[child_loc[0]][child_loc[1]]: # if the child location is an obstacle then skip it
-                    print(f'child location has an obstacle')
                     continue
                 
-                child_cost = curr['g_val'] + 1 + h_values[child_loc]
-                print(f'current cost vs child cost: {curr_cost} vs {child_cost}')
-                
                 constrained, blocked_loc = is_constrained(curr_loc, child_loc, child_time, constraint_table)
-                print(f'direction constrained?: {constrained}, blocked cell is {blocked_loc}')
-                
 
-                # checking if direction is constrained, and changing the type of child node accordingly
-                if constrained == 'move':
-                    if child_loc == blocked_loc:
-                        print(f'cannot move to child location')
+                # checking if direction is constrained, and what type of constraint, then creating child node accordingly
+                if constrained == 'edge' and (child_loc == blocked_loc[0] or child_loc == blocked_loc[1]):
+                    continue
+                    if child_loc != blocked_loc[0] and child_loc != blocked_loc[1]:
+                        child = {'loc': child_loc,
+                                 'g_val': curr['g_val'] + 1,
+                                 'h_val': h_values[child_loc],
+                                 'timestep': child_time,
+                                 'parent': curr}
+                    else:
                         continue
+                elif constrained == 'vertex' and child_loc == blocked_loc[0]:
+                    continue
+                    if child_loc != blocked_loc[0]:
+                        child = {'loc': child_loc,
+                                 'g_val': curr['g_val'] + 1,
+                                 'h_val': h_values[child_loc],
+                                 'timestep': child_time,
+                                 'parent': curr}
+                    else:    
+                        continue
+                else:
                     child = {'loc': child_loc,
-                             'g_val': curr['g_val'] +1,
+                             'g_val': curr['g_val'] + 1,
                              'h_val': h_values[child_loc],
                              'timestep': child_time,
                              'parent': curr}
-                elif constrained == 'stand':
-                    if child_loc == blocked_loc:
-                        print(f'cannot stand in child location')
-                        continue
-                    child = {'loc': child_loc,
-                             'g_val': curr['g_val'] +1,
-                             'h_val': h_values[child_loc],
-                             'timestep': child_time,
-                             'parent': curr}
-                else:                
-                    child = {'loc': child_loc,
-                        'g_val': curr['g_val'] + 1,
-                        'h_val': h_values[child_loc],
-                        'timestep': child_time,
-                        'parent': curr}
+
 
                 child_key = (child['loc'], child['timestep'])
                     
@@ -223,7 +226,4 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
                 else:
                     closed_list[child_key] = child
                     push_node(open_list, child)
-            else:
-                print(f'direction {move((0,0), dir)} goes out of map ({child_loc})')
-                pass
     return None  # Failed to find solutions
