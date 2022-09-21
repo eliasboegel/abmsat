@@ -13,24 +13,25 @@ def detect_collision(path1, path2):
     #           You should use "get_location(path, t)" to get the location of a robot at time t.
     
     # Iterate over all times as long as at least one agent has not reached the goal yet
+    #print(len(path1))
+    #print(len(path2))
     for t in range(max(len(path1), len(path2))):
 
         # Extract positions of both agents
         pos1 = get_location(path1, t)
+        pos1_next = get_location(path1, t+1)
         pos2 = get_location(path2, t)
+        pos2_next = get_location(path2, t+1)
 
-        # Find relative position of agent2 with respect to agent1
-        rel_pos = (pos2[0] - pos1[0], pos2[1] - pos1[1])
-        
-        if rel_pos == (0,0):
+        if pos1 == pos2:
             # Return vertex collision if both agents are in the same location
             return {'loc': [pos1], 'timestep': t}
-        elif (abs(rel_pos[0]) + abs(rel_pos[1])) == 1:
+        elif pos1 == pos2_next and pos1_next == pos2 :
             # Return edge collision if agents are in axis-aligned (not diagonal) adjacent locations
             return {'loc': [pos1, pos2], 'timestep': t}
-        else:
-            # Return None if no collision was found for any timestep
-            return None
+
+    # Return None if no collision was found for any timestep
+    return None
 
 def detect_collisions(paths):
     ##############################
@@ -68,10 +69,10 @@ def standard_splitting(collision):
     #                          specified edge at the specified timestep
     
     # Create constraint for agent1
-    constraint1 = {'agent': collision['a1'], 'loc': collision['loc'], 'timestep': collision['timestep']}
+    constraint1 = {'agent': collision['a1'], 'loc': collision['loc'][::-1], 'timestep': collision['timestep']}
     
     # Create constraint for agent2, if edge constraint -> reverse location order
-    constraint2 = {'agent': collision['a2'], 'loc': collision['loc'][::-1], 'timestep': collision['timestep']}
+    constraint2 = {'agent': collision['a2'], 'loc': collision['loc'][::1], 'timestep': collision['timestep']}
     
     # Return complete list of constraints
     return [constraint1, constraint2]
@@ -203,6 +204,9 @@ class CBSSolver(object):
 
             # Detect collisions between all agents
             p['collisions'] = detect_collisions(p['paths'])
+            #print(f"pre-replan path: {p['paths']}")
+            print(f"#collisions: { len(p['collisions'])}")
+            print(f"last collision: {p['collisions']}")
 
             # Return current paths if no collisions were detected between them
             if not p['collisions']: return p['paths']
@@ -212,6 +216,7 @@ class CBSSolver(object):
 
             # Generate constraints for the two involved agents based on the selected collisions
             constraints = disjoint_splitting(collision) if disjoint else standard_splitting(collision)
+            #print(f"new constraints: {constraints}")
             
             # Iterate through all constraints generated
             for new_constraint in constraints:
@@ -224,15 +229,17 @@ class CBSSolver(object):
                 # Retrieve index of agent for which the current constraint was generated
                 agent = new_constraint['agent']
 
+                #print(f"new constraints: {q['constraints']}")
                 # Generate new path using the new additional constraints (i.e. avoiding the collision)
                 path = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
-                
+                #print(f"replanned path: {path}")
                 # If a path was found, push the new node with updated path back to the open list
                 if path:
                     q['paths'][agent] = path
                     q['collisions'] = detect_collisions(q['paths'])
                     q['cost'] = get_sum_of_cost(q['paths'])
                     self.push_node(q)
+            #print( '------------------------------')
 
 
     def print_results(self, node):
