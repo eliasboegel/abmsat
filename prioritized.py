@@ -31,7 +31,6 @@ class PrioritizedPlanningSolver(object):
         constraints = []
 
         for i in range(self.num_of_agents):  # Find path for each agent
-            print(f'\n-------------Planning for agent {i}-------------')
             
             # print(f'constraints applying to agent {i}: {constraints}\n\n')
             path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
@@ -47,26 +46,27 @@ class PrioritizedPlanningSolver(object):
             #            * self.num_of_agents has the number of total agents
             #            * constraints: array of constraints to consider for future A* searches
             constraint = [] 
+            
             print(f'agent {i} has path: {path}')
             for j in range(len(path)):
                 for k in range(i+1, self.num_of_agents):
                     if j == (len(path)-1):
-                        for l in range(1,3):
+                        for l in range(1,8):
                             loc = get_location(path, j+l)
                             agent = k
                             constraint_dict = {'agent': agent,
                                                'loc': [loc],
                                                'timestep': j+l}     
                             constraint.append(constraint_dict)
-                        continue
+                        
                     loc1 = get_location(path, j)
                     loc2 = get_location(path, j+1)
                     agent = k
                     constraint_dict = {'agent': agent,
                                        'loc': [loc1,loc2],
-                                       'timestep': j+1}   
+                                       'timestep': j}   
                     constraint.append(constraint_dict)
-            print(f'constraints from agent{i}: {constraint}')
+            # print(f'constraints from agent{i}: {constraint}')
             constraints = constraints + constraint
             # print(f'constraints: {constraints}')
 
