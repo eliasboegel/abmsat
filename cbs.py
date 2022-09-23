@@ -25,10 +25,10 @@ def detect_collision(path1, path2):
 
         if pos1 == pos2:
             # Return vertex collision if both agents are in the same location
-            return {'loc': [pos1], 'timestep': t}
+            return {'loc': [pos1, pos1_next], 'timestep': t-1}
         elif pos1 == pos2_next and pos1_next == pos2 :
             # Return edge collision if agents are in axis-aligned (not diagonal) adjacent locations
-            return {'loc': [pos1, pos2], 'timestep': t}
+            return {'loc': [pos2, pos1], 'timestep': t}
 
     # Return None if no collision was found for any timestep
     return None
@@ -69,10 +69,10 @@ def standard_splitting(collision):
     #                          specified edge at the specified timestep
     
     # Create constraint for agent1
-    constraint1 = {'agent': collision['a1'], 'loc': collision['loc'][::-1], 'timestep': collision['timestep']}
+    constraint1 = {'agent': collision['a1'], 'loc': collision['loc'][::1], 'timestep': collision['timestep']}
     
     # Create constraint for agent2, if edge constraint -> reverse location order
-    constraint2 = {'agent': collision['a2'], 'loc': collision['loc'][::1], 'timestep': collision['timestep']}
+    constraint2 = {'agent': collision['a2'], 'loc': collision['loc'][::-1], 'timestep': collision['timestep']}
     
     # Return complete list of constraints
     return [constraint1, constraint2]
@@ -103,9 +103,9 @@ def disjoint_splitting(collision):
              # Filter out diagonal movement
             if abs(i) == abs(j): continue
 
-
-            loc = (collision['loc'][0][0] + i, collision['loc'][0][0] + j)   
-            if loc != collision['loc'][1]:
+            print(f"col loc: {collision['loc']}")
+            loc = (collision['loc'][-1][0] + i, collision['loc'][-1][0] + j)   
+            if loc != collision['loc'][0]:
                 constraints1.append({'agent': agent1, 'loc': loc, 'timestep': collision['timestep']})
     
     # Prevent agent2 from moving over the edge or into the vertex into which agent1 moves
@@ -201,6 +201,7 @@ class CBSSolver(object):
         while self.open_list:
             # Retrieve open node and remove it from list
             p = self.pop_node()
+            print(f"Original paths: {p['paths']}")
 
             # Detect collisions between all agents
             p['collisions'] = detect_collisions(p['paths'])
@@ -228,11 +229,12 @@ class CBSSolver(object):
 
                 # Retrieve index of agent for which the current constraint was generated
                 agent = new_constraint['agent']
-
-                #print(f"new constraints: {q['constraints']}")
+                
+                print(f"New constraint: {new_constraint}")
+                print(f"before: {q['paths'][agent]}")
                 # Generate new path using the new additional constraints (i.e. avoiding the collision)
                 path = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
-                #print(f"replanned path: {path}")
+                print(f"after: {path}")
                 # If a path was found, push the new node with updated path back to the open list
                 if path:
                     q['paths'][agent] = path
