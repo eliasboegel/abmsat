@@ -1,7 +1,8 @@
 import time as timer
 import heapq
 import random
-from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
+import copy
+from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost, get_path
 
 
 def detect_collision(path1, path2):
@@ -23,10 +24,10 @@ def detect_collision(path1, path2):
         pos2 = get_location(path2, t)
         pos2_next = get_location(path2, t+1)
 
-        if pos1 == pos2:
+        if pos1_next == pos2_next:
             # Return vertex collision if both agents are in the same location
-            return {'loc': [pos1, pos1_next], 'timestep': t-1}
-        elif pos1 == pos2_next and pos1_next == pos2 :
+            return {'loc': [pos1_next, pos1_next], 'timestep': t}
+        elif pos1 == pos2_next and pos1_next == pos2:
             # Return edge collision if agents are in axis-aligned (not diagonal) adjacent locations
             return {'loc': [pos2, pos1], 'timestep': t}
 
@@ -69,7 +70,7 @@ def standard_splitting(collision):
     #                          specified edge at the specified timestep
     
     # Create constraint for agent1
-    constraint1 = {'agent': collision['a1'], 'loc': collision['loc'][::1], 'timestep': collision['timestep']}
+    constraint1 = {'agent': collision['a1'], 'loc': collision['loc'], 'timestep': collision['timestep']}
     
     # Create constraint for agent2, if edge constraint -> reverse location order
     constraint2 = {'agent': collision['a2'], 'loc': collision['loc'][::-1], 'timestep': collision['timestep']}
@@ -90,27 +91,32 @@ def disjoint_splitting(collision):
     #           Choose the agent randomly
     
     # Randomly select one agent as "agent1" and the other as "agent2"
-    agent1 = random.randrange(0, 2)
-    agent2 = 0 if agent1 else 1
+    agent_selector = random.randrange(0, 2)
+    agent1_local_id = agent_selector # Local id, i.e. first or second agent within this collision only
+    agent2_local_id = 0 if agent1_local_id else 1 # If agent1 is 0, then agent2 is 1 and vice-versa
+    agent1_global_id = collision['a1'] if agent_selector else collision['a2'] # Id of agent1 out of all agents
+    agent2_global_id = collision['a2'] if agent_selector else collision['a1'] # Id of agent2 out of all agents
     
     # Force move away from current location
-    constraints1 = [{'agent': agent1, 'loc': collision['loc'][0], 'timestep': collision['timestep']}]
-    
+    constraints1 = [{'agent': agent1_global_id, 'loc': collision['loc'][agent1_local_id], 'timestep': collision['timestep']}]
+    print(f"agent1: {agent1_local_id}, {agent1_global_id}, {collision['loc'][agent1_local_id]}")
+    print(f"agent2: {agent2_local_id}, {agent2_global_id}, {collision['loc'][agent2_local_id]}")
     # Constrain all directions but the one in which agent1 is forced into
     for i in range(-1, 2):
         for j in range(-1, 2):
 
-             # Filter out diagonal movement
+             # Filter out diagonals
             if abs(i) == abs(j): continue
 
-            print(f"col loc: {collision['loc']}")
-            loc = (collision['loc'][-1][0] + i, collision['loc'][-1][0] + j)   
-            if loc != collision['loc'][0]:
-                constraints1.append({'agent': agent1, 'loc': loc, 'timestep': collision['timestep']})
+            #print(f"col loc: {collision['loc']}")
+            loc = (collision['loc'][agent1_local_id][0] + i, collision['loc'][agent1_local_id][1] + j)   
+            if loc != collision['loc'][agent2_local_id]:
+                constraints1.append({'agent': agent1_global_id, 'loc': loc, 'timestep': collision['timestep']})
     
     # Prevent agent2 from moving over the edge or into the vertex into which agent1 moves
-    constraint2 = [{'agent': agent2, 'loc': collision['loc'], 'timestep': collision['timestep']}]
+    constraint2 = [{'agent': agent2_global_id, 'loc': collision['loc'][::-1 if agent2_local_id else 1], 'timestep': collision['timestep']}]
     
+    print(f"constraints: {constraints1 + constraint2}")
     # Return complete list of constraints
     return constraints1 + constraint2
     
@@ -142,12 +148,12 @@ class CBSSolver(object):
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        print("Generate node {}".format(self.num_of_generated))
+        #print("Generate node {}".format(self.num_of_generated))
         self.num_of_generated += 1
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
-        print("Expand node {}".format(id))
+        #print("Expand node {}".format(id))
         self.num_of_expanded += 1
         return node
 
@@ -199,15 +205,17 @@ class CBSSolver(object):
 
         # While open nodes still exist
         while self.open_list:
+            print(len(self.open_list))
+            
             # Retrieve open node and remove it from list
             p = self.pop_node()
-            print(f"Original paths: {p['paths']}")
+            #print(f"Original paths: {p['paths']}")
 
             # Detect collisions between all agents
             p['collisions'] = detect_collisions(p['paths'])
             #print(f"pre-replan path: {p['paths']}")
-            print(f"#collisions: { len(p['collisions'])}")
-            print(f"last collision: {p['collisions']}")
+            #print(f"#collisions: { len(p['collisions'])}")
+            #print(f"last collision: {p['collisions']}")
 
             # Return current paths if no collisions were detected between them
             if not p['collisions']: return p['paths']
@@ -220,27 +228,32 @@ class CBSSolver(object):
             #print(f"new constraints: {constraints}")
             
             # Iterate through all constraints generated
-            for new_constraint in constraints:
+            #agent_selector = random.randrange(0, 2)
+            for new_constraint in [constraints[0]]: #[constraints[agent_selector]]:
                 # Create new blank node with the newly generated constraints and previous paths
                 q = {
-                    'constraints': p['constraints'] + [new_constraint],
-                     'paths': p['paths'].copy()
+                    'constraints': p['constraints'].copy() + [new_constraint],
+                    'paths': p['paths'].copy()
                 }
 
                 # Retrieve index of agent for which the current constraint was generated
                 agent = new_constraint['agent']
                 
-                print(f"New constraint: {new_constraint}")
-                print(f"before: {q['paths'][agent]}")
+                #print(f"New constraint: {new_constraint}")
+                #print(f"before: {q['paths'][agent]}")
                 # Generate new path using the new additional constraints (i.e. avoiding the collision)
                 path = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
-                print(f"after: {path}")
+                #print(f"after: {path}")
                 # If a path was found, push the new node with updated path back to the open list
-                if path:
-                    q['paths'][agent] = path
+                
+                if path is not None:
+                    q['paths'][agent] = path.copy()
                     q['collisions'] = detect_collisions(q['paths'])
                     q['cost'] = get_sum_of_cost(q['paths'])
                     self.push_node(q)
+                    #print(f"q path: {q['paths']}")
+                else:
+                    print("Solution not found")
             #print( '------------------------------')
 
 
