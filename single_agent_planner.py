@@ -105,7 +105,7 @@ def is_constrained(curr_loc, child_loc, next_time, constraint_table): # badly wr
     vertex_key = (child_loc, next_time)
     edge_key = (curr_loc, next_time)
 
-    print(f'the vertex and edge keys ar: {vertex_key}, {edge_key}')
+    # print(f'the vertex and edge keys ar: {vertex_key}, {edge_key}')
 
     # handling vertex constraint
     if vertex_key in constraint_table:
@@ -156,7 +156,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     closed_list = dict()
     constraint_table = build_constraint_table(constraints, agent)
     print(f'\n-------------Planning for agent {agent}-------------')    
-    print(f'agent {agent}\'s constraint table: {constraint_table}')
+    # print(f'agent {agent}\'s constraint table: {constraint_table}')
 
     # setting up root node and adding it to open and closed list, to initiate the algorithm
     h_value = h_values[start_loc]
@@ -177,33 +177,33 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         child_time = curr['timestep'] + 1
 
         curr_cost = curr['g_val']+curr['h_val']
-        print(f'moved to location: {curr_loc}\n\n')
-        print(f'current location: {curr_loc}')
+        # print(f'moved to location: {curr_loc}\n\n')
+        # print(f'current location: {curr_loc}')
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
         if curr_loc == goal_loc: # if the current location is the goal location then return the path
             path = get_path(curr)
-            print(f'agent {agent} has path: {path}\n\n\n\n')
+            # print(f'agent {agent} has path: {path}\n\n\n\n
             return path
 
         for dir in range(5): # exploring all five moves that can be taken from the current location            
             child_loc = move(curr['loc'], dir)
-            print(f'testing direction {dir}, moving from {curr_loc} to {child_loc}')
+            # print(f'testing direction {dir}, moving from {curr_loc} to {child_loc}')
 
             if -1<child_loc[0]<dims[0] and -1<child_loc[1]<dims[1]: # checking if the child location is within the map
                 if my_map[child_loc[0]][child_loc[1]]: # if the child location is an obstacle then skip it
-                    print('direction is blocked by obstacle\n')
+                    # print('direction is blocked by obstacle\n')
                     continue
                 
                 constrained, blocked_loc = is_constrained(curr_loc, child_loc, curr_time, constraint_table)
-                print(f'is the movement constrained? {constrained}, if so the blocked cell is: {blocked_loc}')
+                # print(f'is the movement constrained? {constrained}, if so the blocked cell is: {blocked_loc}')
 
                 # checking if direction is constrained, and what type of constraint, then creating child node accordingly
                 if constrained == 'edge' and (child_loc == blocked_loc[0] or child_loc == blocked_loc[1]):
-                    print('direction constrained by edge\n')
+                    # print('direction constrained by edge\n')
                     continue
                 elif constrained == 'vertex' and child_loc == blocked_loc[0]:
-                    print('direction constrained by vertex\n')
+                    # print('direction constrained by vertex\n')
                     continue
                 else:
                     child = {'loc': child_loc,
@@ -216,7 +216,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
 
                 child_key = (child['loc'], child['timestep'])
                 
-                print(f'direction unconstrained! Pushing child loc to open list\n curr vs child cost: {curr_cost}, {child_cost}\n')
+                # print(f'direction unconstrained! Pushing child loc to open list\n curr vs child cost: {curr_cost}, {child_cost}\n')
                 if (child_key) in closed_list: 
                     existing_node = closed_list[child_key]
                     if compare_nodes(child, existing_node):
@@ -225,6 +225,6 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
                 else:
                     closed_list[child_key] = child
                     push_node(open_list, child)
-            else:
-                print('direction is out of map\n')
+            # else:
+            #     print('direction is out of map\n')
     return None  # Failed to find solutions
