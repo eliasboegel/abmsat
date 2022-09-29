@@ -229,7 +229,7 @@ class CBSSolver(object):
             
             # Iterate through all constraints generated
             #agent_selector = random.randrange(0, 2)
-            for new_constraint in [constraints[0]]: #[constraints[agent_selector]]:
+            for new_constraint in constraints: #[constraints[agent_selector]]:
                 # Create new blank node with the newly generated constraints and previous paths
                 q = {
                     'constraints': p['constraints'].copy() + [new_constraint],
