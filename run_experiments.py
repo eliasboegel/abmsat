@@ -9,6 +9,7 @@ import argparse
 import glob
 from pathlib import Path
 from cbs import CBSSolver
+from cbscl import CBSCLSolver
 from independent import IndependentSolver
 from prioritized import PrioritizedPlanningSolver
 from distributed import DistributedPlanningSolver # Placeholder for Distributed Planning
@@ -117,7 +118,7 @@ if __name__ == '__main__':
     parser.add_argument('--disjoint', action='store_true', default=False,
                         help='Use the disjoint splitting')
     parser.add_argument('--solver', type=str, default=SOLVER,
-                        help='The solver to use (one of: {CBS,Independent,Prioritized}), defaults to ' + str(SOLVER))
+                        help='The solver to use (one of: {CBS,CBSCL,Independent,Prioritized}), defaults to ' + str(SOLVER))
 
     args = parser.parse_args()
     # Hint: Command line options can be added in Spyder by pressing CTRL + F6 > Command line options. 
@@ -135,6 +136,10 @@ if __name__ == '__main__':
             print("***Run CBS***")
             cbs = CBSSolver(my_map, starts, goals)
             paths = cbs.find_solution(args.disjoint)
+        elif args.solver == "CBSCL":
+            print("***Run CBS, Cycle Limited***")
+            solver = CBSCLSolver(my_map, starts, goals)
+            paths = solver.find_solution()
         elif args.solver == "Independent":
             print("***Run Independent***")
             solver = IndependentSolver(my_map, starts, goals)
