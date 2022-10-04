@@ -1,11 +1,11 @@
 """
-This file contains the AircraftDistributed class that can be used to implement individual planning.
+This file contains the AgentDistributed class that can be used to implement individual planning.
 
 Code in this file is just provided as guidance, you are free to deviate from it.
 """
 
-class AircraftDistributed(object):
-    """Aircraft object to be used in the distributed planner."""
+class AgentDistributed(object):
+    """Agent object to be used in the distributed planner."""
 
     def __init__(self, my_map, start, goal, heuristics, agent_id):
         """

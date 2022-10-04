@@ -6,7 +6,7 @@ Code in this file is just provided as guidance, you are free to deviate from it.
 
 import time as timer
 from single_agent_planner import compute_heuristics, a_star, get_sum_of_cost
-from aircraft import AircraftDistributed
+from Agent import AgentDistributed
 from cbs import detect_collision, detect_collisions
 
 class DistributedPlanningSolver(object):
@@ -38,9 +38,9 @@ class DistributedPlanningSolver(object):
         self.CPU_time = timer.time() - start_time
         
         
-        # Create agent objects with AircraftDistributed class
+        # Create agent objects with AgentDistributed class
         for i in range(self.num_of_agents):
-            newAgent = AircraftDistributed(self.my_map, self.starts[i], self.goals[i], self.heuristics[i], i)
+            newAgent = AgentDistributed(self.my_map, self.starts[i], self.goals[i], self.heuristics[i], i)
         
         
         # Print final output
