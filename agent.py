@@ -39,17 +39,24 @@ class AgentDistributed(object):
 
 
     def try_path(self, map, constraint, t, time_dependent=True):
-        print(f"pos_at_replan {self.position_at(t)}")
+        # print(f"pos_at_replan {self.position_at(t)}")
+        print('try path triggered')
+        print(f'current planned path for agent {self.id}: {self.planned_path}')
         self.last_tried_path = a_star(map, self.pos, self.goal, self.heuristics, self.id, constraint, time_dependent=time_dependent)
         return self.last_tried_path
 
     def use_path(self, path, t):
-        path = [path[0]] + path
+        print('use path triggered')
+        print(f'current planned path for agent {self.id}: {self.planned_path}')
         self.planned_path = path
         self.planned_path_t = t
 
     def plan_path(self, constraint, t):
-        self.planned_path = a_star(self.my_map, self.position_at(t-1), self.goal, self.heuristics, self.id, constraint)
+        # For position, you have to use self.pos and not position at. Because position at takes the planned path of
+        position = self.position_at(t-1)
+        print(f't-1 is {t-1}, planned time is {self.planned_path_t}')
+        print(f'current planned path for agent {self.id}: {self.planned_path}')
+        self.planned_path = a_star(self.my_map, position, self.goal, self.heuristics, self.id, constraint)
         self.planned_path_t = t
     
     def get_remaining_planned_path(self, t):
@@ -59,6 +66,7 @@ class AgentDistributed(object):
     def move_with_plan(self, t):
         new_pos = self.position_at(t+1)
         curr_pos = self.position_at(t)
+        print(f't is {t}\ncurr_pos{curr_pos}\nnew_pos {new_pos}\n')
         curr_move = (new_pos[0] - curr_pos[0], new_pos[1] - curr_pos[1])
         # print(f'curr_pos {curr_pos}')
         # print(f'new_pos {new_pos}')

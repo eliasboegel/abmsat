@@ -175,7 +175,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_depen
     constraint_table = build_constraint_table(constraints, agent)
     print(f'\n-------------Planning for agent {agent}-------------')    
     
-    print(f'constraints {constraints}')
+    print(f'constraints for agent{agent}: {constraints}')
     # print(f'agent {agent}\'s constraint table: {constraint_table}')
 
     # setting up root node and adding it to open and closed list, to initiate the algorithm
@@ -208,7 +208,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_depen
         if curr_loc == goal_loc and constrained == None: # if the current location is the goal location then return the path
             if curr_loc != blocked_loc:
                 path = get_path(curr)
-                # print(f'agent {agent} has path: {path}\n\n\n\n')
+                print(f'agent {agent} has produced the path: {path}')
                 return path
 
         for dir in range(5): # exploring all five moves that can be taken from the current location            
@@ -255,5 +255,5 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_depen
                     push_node(open_list, child)
             # else:
             #     print('direction is out of map\n')
-    # print("A* failed to find solution!")
+    print("A* failed to find solution!")
     return None  # Failed to find solutions
