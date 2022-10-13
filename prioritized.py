@@ -1,5 +1,5 @@
 import time as timer
-from single_agent_planner import compute_heuristics, a_star, get_sum_of_cost, get_location
+from single_agent_planner import compute_heuristics, a_star, get_sum_of_cost, get_location, constrain_whole_path
 
 
 class PrioritizedPlanningSolver(object):
@@ -30,45 +30,22 @@ class PrioritizedPlanningSolver(object):
         result = []
         constraints = []
 
-        for i in range(self.num_of_agents):  # Find path for each agent
+        # Find path for each agent
+        for i in range(self.num_of_agents):  
             
-            # print(f'constraints applying to agent {i}: {constraints}\n\n')
+            # Running a* for each agent
             path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
                           i, constraints)
             if path is None:
                 raise BaseException('No solutions')
             result.append(path)
-
-            ##############################
-            # Task 2: Add constraints here
-            #         Useful variables:
-            #            * path contains the solution path of the current (i'th) agent, e.g., [(1,1),(1,2),(1,3)]
-            #            * self.num_of_agents has the number of total agents
-            #            * constraints: array of constraints to consider for future A* searches
             constraint = [] 
             
             print(f'agent {i} has path: {path}')
-            for j in range(len(path)):
-                for k in range(i+1, self.num_of_agents):
-                    if j == (len(path)-1):
-                        for l in range(1,8):
-                            loc = get_location(path, j+l)
-                            agent = k
-                            constraint_dict = {'agent': agent,
-                                               'loc': [loc],
-                                               'timestep': j+l}     
-                            constraint.append(constraint_dict)
-                        
-                    loc1 = get_location(path, j)
-                    loc2 = get_location(path, j+1)
-                    agent = k
-                    constraint_dict = {'agent': agent,
-                                       'loc': [loc1,loc2],
-                                       'timestep': j}   
-                    constraint.append(constraint_dict)
-            # print(f'constraints from agent{i}: {constraint}')
+            for k in range(i+1, self.num_of_agents):
+                constraint = constraint + (constrain_whole_path(path, k))
+
             constraints = constraints + constraint
-            # print(f'constraints: {constraints}')
 
             ##############################
         print(f'this is result {result}')

@@ -29,21 +29,41 @@ class AgentDistributed(object):
         self.distance_traveled = 0
         self.last_move = (0, 0)
 
+        self.last_tried_path = []
         self.planned_path = []
         self.planned_path_t = 0
 
-        self.plan_path(0)
+        self.plan_path([], 0)
 
         self.momentum = 0
 
 
-    def plan_path(self, constraint):
-        self.planned_path = a_star(self.my_map, self.pos, self.goal, self.heuristics, constraint, [])
-        
+    def try_path(self, map, constraint, t, time_dependent=True):
+        print(f"pos_at_replan {self.position_at(t)}")
+        self.last_tried_path = a_star(map, self.pos, self.goal, self.heuristics, self.id, constraint, time_dependent=time_dependent)
+        return self.last_tried_path
+
+    def use_path(self, path, t):
+        path = [path[0]] + path
+        self.planned_path = path
+        self.planned_path_t = t
+
+    def plan_path(self, constraint, t):
+        self.planned_path = a_star(self.my_map, self.position_at(t-1), self.goal, self.heuristics, self.id, constraint)
+        self.planned_path_t = t
     
+    def get_remaining_planned_path(self, t):
+        return self.planned_path[t - self.planned_path_t:]
+
+
     def move_with_plan(self, t):
-        curr_move = self.planned_path[t - self.planned_path_t + 1] - self.planned_path[t - self.planned_path_t]
-        self.pos = self.planned_path[t - self.planned_path_t + 1] # Retrieve next position along path and move to it
+        new_pos = self.position_at(t+1)
+        curr_pos = self.position_at(t)
+        curr_move = (new_pos[0] - curr_pos[0], new_pos[1] - curr_pos[1])
+        # print(f'curr_pos {curr_pos}')
+        # print(f'new_pos {new_pos}')
+        # print(f'plan {self.planned_path}\n\n')
+        self.pos = new_pos # Retrieve next position along path and move to it
         
         if curr_move == self.last_move and curr_move != (0,0):
             self.momentum += 1
@@ -51,19 +71,22 @@ class AgentDistributed(object):
             self.momentum = 0
 
         self.last_move = curr_move
+        self.path.append(self.pos)
 
         
     def position_at(self, t):
         if t < 0:
             return self.start
-        elif t > self.planned_path_t:
-            if t > self.planned_path_t + len(self.planned_path):
+        elif t >= self.planned_path_t:
+            if t >= self.planned_path_t + len(self.planned_path):
                 return self.goal
             else:
                 return self.planned_path[t - self.planned_path_t]
         else:
             return self.path[t]
 
+    def get_last_two_moves(self, t):
+        return [self.position_at(t-1), self.position_at(t)]
 
-    def is_finished(self):
+    def is_on_goal(self):
         return (self.pos == self.goal)

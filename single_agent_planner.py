@@ -49,7 +49,6 @@ def compute_heuristics(my_map, goal):
 
 
 
-
 def get_location(path, time):
     if time < 0:
         return path[0]
@@ -141,8 +140,27 @@ def build_constraint_table(constraints, agent): # need to build the constraint k
             table[constraint_key] = constraint
     return table
 
+def constrain_whole_path(path, constrained_agent):
+    constraints = []
+    for j in range(len(path)):
+        # if j == (len(path)-1):
+        #     for l in range(1,8):
+        #         loc = get_location(path, j+l)
+        #         agent = k
+        #         constraint_dict = {'agent': agent,
+        #                            'loc': [loc],
+        #                            'timestep': j+l}     
+        #         constraint.append(constraint_dict)
+        loc1 = get_location(path, j)
+        loc2 = get_location(path, j+1)
+        agent = constrained_agent
+        constraint_dict = {'agent': agent,
+                        'loc': [loc1,loc2],
+                        'timestep': j}
+        constraints.append(constraint_dict)
+    return constraints
 
-def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
+def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_dependent=True):
     """ my_map      - binary obstacle map
         start_loc   - start position
         goal_loc    - goal position
@@ -156,6 +174,8 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     closed_list = dict()
     constraint_table = build_constraint_table(constraints, agent)
     print(f'\n-------------Planning for agent {agent}-------------')    
+    
+    print(f'constraints {constraints}')
     # print(f'agent {agent}\'s constraint table: {constraint_table}')
 
     # setting up root node and adding it to open and closed list, to initiate the algorithm
@@ -171,6 +191,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     dims = (len(my_map), len(my_map[0]))
 
     while len(open_list) > 0:
+        #print(f'length of pen list{len(open_list)}')
         curr = pop_node(open_list)
         curr_loc = curr['loc']
         curr_time = curr['timestep']
@@ -179,12 +200,16 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         curr_cost = curr['g_val']+curr['h_val']
         # print(f'moved to location: {curr_loc}\n\n')
         # print(f'current location: {curr_loc}')
+
+        constrained, blocked_loc = is_constrained(curr_loc, curr_loc, curr_time, constraint_table)
+
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
-        if curr_loc == goal_loc: # if the current location is the goal location then return the path
-            path = get_path(curr)
-            # print(f'agent {agent} has path: {path}\n\n\n\n
-            return path
+        if curr_loc == goal_loc and constrained == None: # if the current location is the goal location then return the path
+            if curr_loc != blocked_loc:
+                path = get_path(curr)
+                # print(f'agent {agent} has path: {path}\n\n\n\n')
+                return path
 
         for dir in range(5): # exploring all five moves that can be taken from the current location            
             child_loc = move(curr['loc'], dir)
@@ -213,18 +238,22 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
                              'parent': curr}
                     child_cost = child['g_val'] + child['h_val']
 
-
-                child_key = (child['loc'], child['timestep'])
+                # print(f'hval {h_values[child_loc]}')
+                child_key = (child['loc'], child['timestep']*time_dependent)
                 
                 # print(f'direction unconstrained! Pushing child loc to open list\n curr vs child cost: {curr_cost}, {child_cost}\n')
                 if (child_key) in closed_list: 
+
                     existing_node = closed_list[child_key]
                     if compare_nodes(child, existing_node):
                         closed_list[child_key] = child
                         push_node(open_list, child)
                 else:
+                    a = {child['loc']}
+                    # print(f'just closed node {a}\nopen nodes are {len(open_list)}')
                     closed_list[child_key] = child
                     push_node(open_list, child)
             # else:
             #     print('direction is out of map\n')
+    # print("A* failed to find solution!")
     return None  # Failed to find solutions

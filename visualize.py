@@ -10,6 +10,8 @@ Colors = ['green', 'blue', 'orange', 'dodgerblue', 'purple', 'pink', 'brown', 'y
 
 class Animation:
     def __init__(self, my_map, starts, goals, paths):
+        
+
         self.my_map = np.flip(np.transpose(my_map), 1)
         self.starts = []
         for start in starts:
@@ -26,7 +28,7 @@ class Animation:
 
         aspect = len(self.my_map) / len(self.my_map[0])
 
-        self.fig = plt.figure(frameon=False, figsize=(4 * aspect, 4))
+        self.fig = plt.figure(num=1,frameon=False, figsize=(4 * aspect, 4))
         self.ax = self.fig.add_subplot(111, aspect='equal')
         self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=None, hspace=None)
         # self.ax.set_frame_on(False)
@@ -68,11 +70,29 @@ class Animation:
             self.agent_names[i].set_verticalalignment('center')
             self.artists.append(self.agent_names[i])
 
+    # def animate_continuously(self):
+        self.animation = animation.FuncAnimation(self.fig, self.animate_func,
+                                                 init_func=self.init_func,
+                                                 frames=int(self.T + 1) * 10,
+                                                 interval=20,
+                                                 blit=True)
+
+
+    def animate_once(self, pathh):
+        plt.ion()
+        self.paths = pathh
         self.animation = animation.FuncAnimation(self.fig, self.animate_func,
                                                  init_func=self.init_func,
                                                  frames=int(self.T + 1) * 10,
                                                  interval=8,
-                                                 blit=True)
+                                                 blit=True,
+                                                 repeat=False)
+        plt.pause(1)
+        self.patches = []
+        self.artists = []
+        self.agents = dict()
+        self.agent_names = dict()
+        self.paths = []
 
     def save(self, file_name, speed):
         self.animation.save(

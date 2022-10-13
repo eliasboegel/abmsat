@@ -150,7 +150,7 @@ if __name__ == '__main__':
             paths = solver.find_solution()
         elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
             print("***Run Distributed Planning***")
-            solver = DistributedPlanningSolver(my_map, starts, goals, ...) #!!!TODO: add your own distributed planning implementation here.
+            solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
             paths = solver.find_solution()
         else: 
             raise RuntimeError("Unknown solver!")
@@ -162,6 +162,7 @@ if __name__ == '__main__':
         if not args.batch:
             print("***Test paths on a simulation***")
             animation = Animation(my_map, starts, goals, paths)
+            # animation.animate_continuously()
             # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
             animation.show()
     result_file.close()
