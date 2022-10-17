@@ -160,7 +160,7 @@ def constrain_whole_path(path, constrained_agent):
         constraints.append(constraint_dict)
     return constraints
 
-def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_dependent=True):
+def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_dependent=True, init_time=0):
     """ my_map      - binary obstacle map
         start_loc   - start position
         goal_loc    - goal position
@@ -175,7 +175,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_depen
     constraint_table = build_constraint_table(constraints, agent)
     print(f'\n-------------Planning for agent {agent}-------------')    
     
-    print(f'constraints for agent{agent}: {constraints}')
+    print(f'constraint table for agent{agent}: {constraint_table}')
     # print(f'agent {agent}\'s constraint table: {constraint_table}')
 
     # setting up root node and adding it to open and closed list, to initiate the algorithm
@@ -183,7 +183,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_depen
     root = {'loc': start_loc,
         'g_val': 0,
         'h_val': h_value,
-        'timestep': 0,
+        'timestep': init_time,
         'parent': None}
     push_node(open_list, root)
     closed_list[(root['loc'], 0)] = root
@@ -199,7 +199,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_depen
 
         curr_cost = curr['g_val']+curr['h_val']
         # print(f'moved to location: {curr_loc}\n\n')
-        # print(f'current location: {curr_loc}')
+        # print(f'current location: {curr_loc} (time = {curr_time}')
 
         constrained, blocked_loc = is_constrained(curr_loc, curr_loc, curr_time, constraint_table)
 

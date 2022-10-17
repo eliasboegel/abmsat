@@ -40,23 +40,23 @@ class AgentDistributed(object):
 
     def try_path(self, map, constraint, t, time_dependent=True):
         # print(f"pos_at_replan {self.position_at(t)}")
-        print('try path triggered')
-        print(f'current planned path for agent {self.id}: {self.planned_path}')
+        # print('try path triggered')
+        # print(f'current planned path for agent {self.id}: {self.planned_path}')
         self.last_tried_path = a_star(map, self.pos, self.goal, self.heuristics, self.id, constraint, time_dependent=time_dependent)
         return self.last_tried_path
 
     def use_path(self, path, t):
-        print('use path triggered')
-        print(f'current planned path for agent {self.id}: {self.planned_path}')
+        # print('use path triggered')
+        # print(f'current planned path for agent {self.id}: {self.planned_path}')
         self.planned_path = path
-        self.planned_path_t = t
+        # self.planned_path_t = t
 
     def plan_path(self, constraint, t):
         # For position, you have to use self.pos and not position at. Because position at takes the planned path of
-        position = self.position_at(t-1)
-        print(f't-1 is {t-1}, planned time is {self.planned_path_t}')
-        print(f'current planned path for agent {self.id}: {self.planned_path}')
-        self.planned_path = a_star(self.my_map, position, self.goal, self.heuristics, self.id, constraint)
+        position = self.pos
+        # print(f't-1 is {t-1}, planned time is {self.planned_path_t}')
+        # print(f'current planned path for agent {self.id}: {self.planned_path}')
+        self.planned_path = a_star(self.my_map, position, self.goal, self.heuristics, self.id, constraint, init_time=t)
         self.planned_path_t = t
     
     def get_remaining_planned_path(self, t):
@@ -66,7 +66,7 @@ class AgentDistributed(object):
     def move_with_plan(self, t):
         new_pos = self.position_at(t+1)
         curr_pos = self.position_at(t)
-        print(f't is {t}\ncurr_pos{curr_pos}\nnew_pos {new_pos}\n')
+        # print(f't is {t}\ncurr_pos{curr_pos}\nnew_pos {new_pos}\n')
         curr_move = (new_pos[0] - curr_pos[0], new_pos[1] - curr_pos[1])
         # print(f'curr_pos {curr_pos}')
         # print(f'new_pos {new_pos}')
@@ -84,13 +84,17 @@ class AgentDistributed(object):
         
     def position_at(self, t):
         if t < 0:
+            # print(f'returning start: {start}')
             return self.start
         elif t >= self.planned_path_t:
             if t >= self.planned_path_t + len(self.planned_path):
+                # print(f'returning the goal: {self.goal}')
                 return self.goal
             else:
+                # print(f'returning index from planned path using the index {t - self.planned_path_t} from the list {self.planned_path}: \n{self.planned_path[t - self.planned_path_t]}')
                 return self.planned_path[t - self.planned_path_t]
         else:
+            # print(f'returning path index: {self.path[t]}')
             return self.path[t]
 
     def get_last_two_moves(self, t):
