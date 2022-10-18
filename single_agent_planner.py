@@ -140,7 +140,7 @@ def build_constraint_table(constraints, agent): # need to build the constraint k
             table[constraint_key] = constraint
     return table
 
-def constrain_whole_path(path, constrained_agent):
+def constrain_whole_path(path, constrained_agent, init_time=0):
     constraints = []
     for j in range(len(path)):
         # if j == (len(path)-1):
@@ -156,7 +156,7 @@ def constrain_whole_path(path, constrained_agent):
         agent = constrained_agent
         constraint_dict = {'agent': agent,
                         'loc': [loc1,loc2],
-                        'timestep': j}
+                        'timestep': j+init_time}
         constraints.append(constraint_dict)
     return constraints
 
