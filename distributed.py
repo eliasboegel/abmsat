@@ -23,6 +23,8 @@ class DistributedPlanningSolver(object):
         self.starts = starts
         self.goals = goals
         self.num_of_agents = len(goals)
+
+        print('helo?')
         
     def find_solution(self):
         """
