@@ -49,12 +49,14 @@ class DistributedPlanningSolver(object):
         # Simulation loop
         t = 0
         while not all_finished:
-            print(f'\n\n\n\nnow planning for time: {t}')
+            print(f'\n\n\n*****now calculating for time: {t}*****')
             # Iterate over all unique combinations of agents
             for i in range(len(agents) - 1):
+                print(f'agent{i} has recorded path of: {agents[i].path}')
                 for j in range(i + 1, len(agents)):
-                    print(f'planned path of agent{i}: {agents[i].planned_path}\nand it has recorded path of: {agents[i].path}\n')
-                    print(f'planned path of agent{j}: {agents[j].planned_path}\nand it has recorded path of: {agents[j].path}')
+                    # if agent[i].moved_back == True:
+                    #     agent[i].moved_back = False
+                    print(f'\ncomparing planned path of agent {i} and {j}:\nagent{i}: {agents[i].planned_path}\nagent{j}: {agents[j].planned_path}')
 
                     # Retreieving locations at t and t+1 for both agents in the combination
                     a1_pos1 = agents[i].position_at(t)
@@ -73,6 +75,7 @@ class DistributedPlanningSolver(object):
 
                         
                         if agents[i].is_on_goal() or agents[j].is_on_goal():
+                            print('detected goal constrain')
                             a1_id = i if agents[j].is_on_goal() else j # Agent 1 needs to pass agent 2
                             a2_id = j if agents[j].is_on_goal() else i # Agent 2 is on goal
 
@@ -86,19 +89,32 @@ class DistributedPlanningSolver(object):
                             a1_path_evade_a2 = agents[a1_id].try_path(evade_a2_map, [], t, time_dependent=False)
                             
                             if a1_path_evade_a2: # If a1 was able to replan around a2
+                                print(f'agent {a1_id} can reach goal by going around agent {a2_id}')
                                 agents[a1_id].use_path(a1_path_evade_a2, t)
                                 print(f"a1 replans around a2: {a1_path_evade_a2}")
+
                             else: # If evasion of a2 isnt possible
-                                evade_a1path_constraints = constrain_whole_path(agents[a1_id].get_remaining_planned_path(t), a2_id)
+                                print(f'agent {a1_id} CANNOT reach goal by going around agent {a2_id}')
+                                evade_a1path_constraints = constrain_whole_path(agents[a1_id].get_remaining_planned_path(t), a2_id, t)
                                 a2_evade_a1path = agents[a2_id].try_path(self.my_map, evade_a1path_constraints, t)
-                                print(f"a2 replans around a1 path: {a2_evade_a1path}")
+
                                 if a2_evade_a1path: # Possible for a2 to move out of a1 path
+                                    print(f"a2 replans around a1 path: {a2_evade_a1path}")
                                     agents[a2_id].use_path(a2_evade_a1path, t)
+                                    
                                 else: # Dead end, both need to move back
-                                    agents[a2_id].use_path([agents[a1_id].position_at(t)], t)
-                                    agents[a1_id].use_path([agents[a1_id].position_at(t-1)], t)
+                                    print(f'agent {a1_id} CANNOT move out of way for agent {a2_id}')
+                                    a = agents[a1_id].path[-4:-1]
+                                    b = agents[a2_id].path[-4:-1]
+                                    print(f'   a and b look like: {a}, {b} ')
+                                    agents[a1_id].use_path(a, t)
+                                    agents[a2_id].use_path(b, t)
+                                    agents[a1_id].moved_back = True
+                                    agents[a2_id].moved_back = True
+
                         # Momentum handling
-                        if agents[i].momentum != agents[j].momentum: 
+                        elif agents[i].momentum != agents[j].momentum: 
+                            print('detected momentum constrain')
                             a1_id = i if agents[i].momentum > agents[j].momentum else j
                             a2_id = j if agents[i].momentum > agents[j].momentum else i
 
@@ -110,7 +126,9 @@ class DistributedPlanningSolver(object):
                                               'timestep': t}
                             agents[a2_id].plan_path([new_constraint], t)
                             print(f'aa agent{a2_id} planned a new path: {agents[a2_id].planned_path}')
+
                         else:
+                            print('detected momentum constrain')
                             # Random loser if both agents have same momentum
                             agent_selector = 0#random.randrange(0, 2) # Random int, either 0 or 1
                             a1_id = i if agent_selector else j
@@ -125,18 +143,21 @@ class DistributedPlanningSolver(object):
                             print(f'cc agent{a2_id} planned a new path: {agents[a2_id].planned_path}')
                             
             n_finished = 0 
-            print('\n\nmoving all agents with their current plan.....')
+            print('\nmoving all agents with their current plan.....')
             for agent in agents:
                 print(f'agent{agent.id} has moved from \n{agent.pos} to')
                 agent.move_with_plan(t)
-                n_finished = n_finished + agent.is_on_goal()
                 print(f'{agent.pos}\nnow it has a recorded path of {agent.path}\n')
+                
+                n_finished = n_finished + agent.is_on_goal()
+
             # Ending simulation if all agents are on goals
             if n_finished == len(agents): all_finished = True
+            elif t > 100: all_finished = True
             
-            print(f'\n\n\n\nfinished for time: {t}')
+            print(f'finished for time: {t}')
             t = t + 1
-            print(f'\n\n\n\moving to time: {t}')
+            print(f'moving to time: {t}')
             animation_paths = []
             for i in range(len(agents)):
                 animation_paths.append(agents[i].get_last_two_moves(t))
