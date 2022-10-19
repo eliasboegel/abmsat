@@ -156,7 +156,7 @@ class CBSCLSolver(object):
         self.num_of_expanded += 1
         return node
 
-    def find_solution(self, disjoint=True):
+    def find_solution(self, disjoint=False):
         """ Finds paths for all agents from their start locations to their goal locations
 
         disjoint    - use disjoint splitting or not
@@ -225,7 +225,7 @@ class CBSCLSolver(object):
             # Generate constraints for the two involved agents based on the selected collisions
             constraints = disjoint_splitting(collision) if disjoint else standard_splitting(collision)
             #print(f"new constraints: {constraints}")
-            
+
             # Iterate through all constraints generated
             #agent_selector = random.randrange(0, 2)
             for new_constraint in constraints: #[constraints[agent_selector]]:
@@ -241,18 +241,19 @@ class CBSCLSolver(object):
                 #print(f"New constraint: {new_constraint}")
                 #print(f"before: {q['paths'][agent]}")
                 # Generate new path using the new additional constraints (i.e. avoiding the collision)
-                path = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
+                new_path = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
                 #print(f"after: {path}")
                 # If a path was found, push the new node with updated path back to the open list
-                
-                if path is not None:
-                    q['paths'][agent] = path.copy()
+
+                if (new_path is not None) and (new_path != p['paths'][agent]):
+                    q['paths'][agent] = new_path.copy()
                     q['collisions'] = detect_collisions(q['paths'])
                     q['cost'] = get_sum_of_cost(q['paths'])
+                    #print(f"Same path as previous node: {p['paths'][agent] == q['paths'][agent]}\n")
                     self.push_node(q)
                     #print(f"q path: {q['paths']}")
-                else:
-                    print("Solution not found")
+                #else:
+                    #print("Solution not found")
             #print( '------------------------------')
 
 
