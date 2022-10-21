@@ -36,11 +36,13 @@ class AgentDistributed(object):
         self.plan_path([], 0)
 
         self.momentum = 0
+        self.moves_back = ("", None)
 
 
 
-    def try_path(self, map, constraint, t, time_dependent=True):
-        self.last_tried_path = a_star(map, self.pos, self.goal, self.heuristics, self.id, constraint, time_dependent=time_dependent, init_time=t)
+    def try_path(self, map, constraint, t, time_dependent=True, goal=None):
+        goal = self.goal if not goal else goal
+        self.last_tried_path = a_star(map, self.pos, goal, self.heuristics, self.id, constraint, time_dependent=time_dependent, init_time=t)
 
         if self.last_tried_path: # need to update planned_path_t if agent tries another path and this another path works 
             self.planned_path_t = t
@@ -70,6 +72,7 @@ class AgentDistributed(object):
         self.pos = new_pos # Retrieve next position along path and move to it
         
         if curr_move == self.last_move and curr_move != (0,0):
+            
             self.momentum += 1
         else:
             self.momentum = 0
@@ -81,13 +84,13 @@ class AgentDistributed(object):
     def position_at(self, t):
         if t < 0:
             return self.start
-        elif t >= self.planned_path_t:
-            if t >= (self.planned_path_t + len(self.planned_path)):
+        elif t > self.planned_path_t:
+            if t > (self.planned_path_t + len(self.planned_path)):
                 # print(f'returning goal, agent {self.id} has plannt t of {self.planned_path_t}')
                 return self.planned_path[-1]
             else:
                 # print(f'returning not goal, agent {self.id} has planned t of {self.planned_path_t}, and is t at {t}')
-                return self.planned_path[t - self.planned_path_t]
+                return self.planned_path[t - self.planned_path_t -1]
         else:
             return self.path[t]
 
