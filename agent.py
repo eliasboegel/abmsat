@@ -38,10 +38,13 @@ class AgentDistributed(object):
         self.momentum = 0
         self.moves_back = ("", None)
 
+        self.curr_constraints = []
+        self.obstructed_map = my_map
+
 
 
     def try_path(self, map, constraint, t, time_dependent=True, goal=None):
-        goal = self.goal if not goal else goal
+        goal = self.goal if goal is None else goal
         self.last_tried_path = a_star(map, self.pos, goal, self.heuristics, self.id, constraint, time_dependent=time_dependent, init_time=t)
 
         if self.last_tried_path: # need to update planned_path_t if agent tries another path and this another path works 
@@ -55,11 +58,13 @@ class AgentDistributed(object):
         self.planned_path = path
         self.planned_path_t = t
 
-    def plan_path(self, constraint, t):
+    def plan_path(self, constraint, t, goal=None, used_map=None):
         # For position, you have to use self.pos and not position at. Because position at takes the planned path of
+        goal = self.goal if goal is None else goal
+        used_map = self.my_map if used_map is None else used_map
         position = self.pos
         self.planned_path_t = t
-        self.planned_path = a_star(self.my_map, position, self.goal, self.heuristics, self.id, constraint, init_time=t)
+        self.planned_path = a_star(used_map, position, self.goal, self.heuristics, self.id, constraint, init_time=t)
         return self.planned_path
     
     def get_remaining_planned_path(self, t):
@@ -80,13 +85,14 @@ class AgentDistributed(object):
 
         self.last_move = curr_move
         self.path.append(self.pos)
+        self.obstructed_map = self.my_map
+        self.curr_constraints = []
 
-        
     def position_at(self, t):
         if t < 0:
             return self.start
         elif t > self.planned_path_t:
-            if t >= (self.planned_path_t + len(self.planned_path)):
+            if t >= (self.planned_path_t + len(self.planned_path) if self.planned_path is not None else 0):
                 # print(f'returning goal, agent {self.id} has plannt t of {self.planned_path_t}')
                 return self.planned_path[-1]
             else:

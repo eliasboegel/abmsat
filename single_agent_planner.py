@@ -140,7 +140,7 @@ def build_constraint_table(constraints, agent): # need to build the constraint k
             table[constraint_key] = constraint
     return table
 
-def constrain_path(path, constrained_agent, init_time=0):
+def constrain_path(path, constrained_agent, init_time=0, dt=1):
     constraints = []
     for j in range(len(path)):
         # if j == (len(path)-1):
@@ -151,12 +151,12 @@ def constrain_path(path, constrained_agent, init_time=0):
             #                        'loc': [loc],
             #                        'timestep': j+l}     
             #     constraints.append(constraint_dict)
-        loc1 = get_location(path, j)
-        loc2 = get_location(path, j+1)
+        loc1 = get_location(path, j*dt)
+        loc2 = get_location(path, j*dt+1)
         agent = constrained_agent
         constraint_dict = {'agent': agent,
                         'loc': [loc1,loc2],
-                        'timestep': j+init_time}
+                        'timestep': j*dt+init_time}
         constraints.append(constraint_dict)
     return constraints
 
@@ -174,7 +174,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_depen
     closed_list = dict()
     constraint_table = build_constraint_table(constraints, agent)
     print(f'\n-------------Planning for agent {agent}-------------')    
-    print(f'agent {agent}\'s constraint table: {constraint_table}')
+    # print(f'agent {agent}\'s constraint table: {constraint_table}')
 
     # setting up root node and adding it to open and closed list, to initiate the algorithm
     h_value = h_values[start_loc]
