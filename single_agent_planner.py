@@ -140,7 +140,7 @@ def build_constraint_table(constraints, agent): # need to build the constraint k
             table[constraint_key] = constraint
     return table
 
-def constrain_whole_path(path, constrained_agent, init_time=0):
+def constrain_path(path, constrained_agent, init_time=0):
     constraints = []
     for j in range(len(path)):
         # if j == (len(path)-1):

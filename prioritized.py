@@ -1,5 +1,5 @@
 import time as timer
-from single_agent_planner import compute_heuristics, a_star, get_sum_of_cost, get_location, constrain_whole_path
+from single_agent_planner import compute_heuristics, a_star, get_sum_of_cost, get_location, constrain_path
 
 
 class PrioritizedPlanningSolver(object):
@@ -43,7 +43,7 @@ class PrioritizedPlanningSolver(object):
             
             print(f'agent {i} has path: {path}')
             for k in range(i+1, self.num_of_agents):
-                constraint = constraint + (constrain_whole_path(path, k))
+                constraint = constraint + (constrain_path(path, k))
 
             constraints = constraints + constraint
 

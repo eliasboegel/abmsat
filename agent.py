@@ -58,8 +58,9 @@ class AgentDistributed(object):
     def plan_path(self, constraint, t):
         # For position, you have to use self.pos and not position at. Because position at takes the planned path of
         position = self.pos
-        self.planned_path = a_star(self.my_map, position, self.goal, self.heuristics, self.id, constraint, init_time=t)
         self.planned_path_t = t
+        self.planned_path = a_star(self.my_map, position, self.goal, self.heuristics, self.id, constraint, init_time=t)
+        return self.planned_path
     
     def get_remaining_planned_path(self, t):
         return self.planned_path[t - self.planned_path_t:]
@@ -85,14 +86,25 @@ class AgentDistributed(object):
         if t < 0:
             return self.start
         elif t > self.planned_path_t:
-            if t > (self.planned_path_t + len(self.planned_path)):
+            if t >= (self.planned_path_t + len(self.planned_path)):
                 # print(f'returning goal, agent {self.id} has plannt t of {self.planned_path_t}')
                 return self.planned_path[-1]
             else:
                 # print(f'returning not goal, agent {self.id} has planned t of {self.planned_path_t}, and is t at {t}')
-                return self.planned_path[t - self.planned_path_t -1]
+                return self.planned_path[t - self.planned_path_t ]
         else:
             return self.path[t]
+    
+    def position_at2(self, t):
+        t_end = len(self.path) + len(self.planned_path) - 1
+        if 0 <= t:
+            return self.start
+        elif 0 < t <= self.planned_path_t:
+            return self.path[t]
+        elif self.planned_path_t < t <= t_end:
+            return self.planned_path[t - self.planned_path_t + 1]
+        elif t_end < t:
+            return self.planned_path[-1]
 
     def get_last_two_moves(self, t):
         return [self.position_at(t-1), self.position_at(t)]
