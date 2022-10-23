@@ -156,6 +156,7 @@ if __name__ == '__main__':
             raise RuntimeError("Unknown solver!")
 
         cost = get_sum_of_cost(paths)
+        print(f"Sum of Cost: {cost}")
         result_file.write("{},{}\n".format(file, cost))
 
 

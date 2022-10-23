@@ -156,7 +156,7 @@ class CBSCLSolver(object):
         self.num_of_expanded += 1
         return node
 
-    def find_solution(self, disjoint=False):
+    def find_solution(self, disjoint=False, limited_cycle_length=1):
         """ Finds paths for all agents from their start locations to their goal locations
 
         disjoint    - use disjoint splitting or not
@@ -172,7 +172,8 @@ class CBSCLSolver(object):
         root = {'cost': 0,
                 'constraints': [],
                 'paths': [],
-                'collisions': []}
+                'collisions': [],
+                'history': []}
 
         # Find initial path for each agent
         for i in range(self.num_of_agents):
@@ -192,7 +193,7 @@ class CBSCLSolver(object):
         # Task 3.2: Testing
         #for collision in root['collisions']:
         # print(f"Constraints: {standard_splitting(collision)}")
-            
+        
         ##############################
         # Task 3.3: High-Level Search
         #           Repeat the following as long as the open list is not empty:
@@ -226,6 +227,10 @@ class CBSCLSolver(object):
             constraints = disjoint_splitting(collision) if disjoint else standard_splitting(collision)
             #print(f"new constraints: {constraints}")
 
+            # Cycle detection step
+            for path in p['history']:
+                print("IMPLEMENTATION MISSING")
+
             # Iterate through all constraints generated
             #agent_selector = random.randrange(0, 2)
             for new_constraint in constraints: #[constraints[agent_selector]]:
@@ -245,8 +250,10 @@ class CBSCLSolver(object):
                 #print(f"after: {path}")
                 # If a path was found, push the new node with updated path back to the open list
 
+                # Second part of conditional limits 1-timestep cycles
                 if (new_path is not None) and (new_path != p['paths'][agent]):
                     q['paths'][agent] = new_path.copy()
+                    q['history'] = p['history'].copy() + [new_path.copy()]
                     q['collisions'] = detect_collisions(q['paths'])
                     q['cost'] = get_sum_of_cost(q['paths'])
                     #print(f"Same path as previous node: {p['paths'][agent] == q['paths'][agent]}\n")
