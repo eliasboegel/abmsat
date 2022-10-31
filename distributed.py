@@ -56,30 +56,40 @@ class DistributedPlanningSolver(object):
 
     def update_others(self, loser_newplan, init_constraints, ignored_ids, invoker_id, reverse=False):
         """Updates the paths of all agents except the ones in ignored_ids"""
-        print(f'triggered {invoker_id}')
+        #print(f'triggered {invoker_id}')
         constraints = init_constraints
-        print(f'çonstrsins {constraints}')
+        #print(f'çonstraints {constraints}')
+        #print(f"ignored: {ignored_ids}")
 
-        print(f"ignored: {ignored_ids}")
+        # Generate list of visible agents
+        #print(f"radar combos: {self.radar_combos}")
         visible_agents = []
         for combo in self.radar_combos:
-            if combo[0] == invoker_id and combo[0] not in ignored_ids:
+            #print(f"invoker: {invoker_id}, combo: {combo}, ")
+            if combo[0] == invoker_id and combo[1] not in ignored_ids:
                 visible_agents.append(combo[1])
-            elif combo[1] == invoker_id and combo[1] not in ignored_ids:
+            elif combo[1] == invoker_id and combo[0] not in ignored_ids:
                 visible_agents.append(combo[0])
-                
+        
         # Update other agents in descending momentum priority order
         sorted_visible_agents = sorted(visible_agents, key=lambda agent_id: self.agents[agent_id].momentum, reverse=True)
+        #print(f'visible agents: {sorted_visible_agents}')
         for visible_agent in sorted_visible_agents:
-            print(f'vis agent: {visible_agent}')
-            next_constraints = constraints + constrain_path([loser_newplan[0]], visible_agent, self.t)
+            
+            #next_constraints = constraints + constrain_path([loser_newplan[0]], visible_agent, self.t)
             # constraints = constraints + constrain_path([loser_newplan[0]] + constrained_pos, other_agent_id, self.t, dt=0)
             # filtered_constraints = list(filter(lambda constraint: constraint["agent"] != other_agent_id, constraints))
-            new_path = self.agents[visible_agent].plan_path(next_constraints, self.t, goal=self.agents[visible_agent].start if reverse else self.agents[visible_agent].goal)
-            new_ignores = [visible_agent]
+            #new_path = self.agents[visible_agent].plan_path(next_constraints, self.t, goal=self.agents[visible_agent].start if reverse else self.agents[visible_agent].goal)
+            #new_ignores = [visible_agent] + ignored_ids
             # print(f'new ignoressss {new_ignores}')
             
-            self.update_others(new_path, next_constraints, new_ignores, visible_agent) # Potentially also ignore the original winner and loser
+            new_ignores = [visible_agent] + ignored_ids
+
+            collision = self.check_collision(invoker_id, visible_agent)
+            if collision:
+                collision_constraints = constraints + constrain_path([collision], visible_agent, self.t, dt=0)
+                next_path = self.agents[visible_agent].plan_path(collision_constraints, self.t, goal=self.agents[visible_agent].start if reverse else self.agents[visible_agent].goal)
+                self.update_others(next_path, collision_constraints, new_ignores, visible_agent) # Potentially also ignore the original winner and loser
 
 
     def resolve_conflict(self, a1_id, a2_id, selector, reverse=False, used_map=None):
@@ -98,6 +108,22 @@ class DistributedPlanningSolver(object):
 
         # Loser is given constraints and has to replan path
         self.update_others(loser_newplan, loser_constraint, [loser_id], loser_id, reverse)
+
+    def check_collision(self, agent1_id, agent2_id):
+        # Checks two agents for collisions
+        # Returns None if there is no collision
+        # Returns the collision position if there is a collision
+
+        a1_pos1 = self.agents[agent1_id].path[-1]
+        a2_pos1 = self.agents[agent2_id].path[-1]
+        a1_pos2 = self.agents[agent1_id].position_at(self.t+1)
+        a2_pos2 = self.agents[agent2_id].position_at(self.t+1)
+
+        vertex_collided = 1 if a1_pos2 == a2_pos2 else 0
+        edge_collided = 1 if a1_pos1 == a2_pos2 and a2_pos1 == a1_pos2 else 0
+        collided = vertex_collided or edge_collided
+
+        return a1_pos2 if collided else None
 
 
     def find_solution(self):
@@ -160,14 +186,14 @@ class DistributedPlanningSolver(object):
 
                     for k in range(2):
                         open_cells = 0
-                        up = self.my_map[two_agents[k][0]-1][two_agents[k][1]]
-                        down = self.my_map[two_agents[k][0]+1][two_agents[k][1]]
-                        left = self.my_map[two_agents[k][0]][two_agents[k][1]-1]
-                        right = self.my_map[two_agents[k][0]][two_agents[k][1]+1]
+                        up = self.my_map[two_agents[k][0]-1][two_agents[k][1]] if two_agents[k][0]-1 >= 0 else None
+                        down = self.my_map[two_agents[k][0]+1][two_agents[k][1]] if two_agents[k][0]+1 < len(self.my_map) else None
+                        left = self.my_map[two_agents[k][0]][two_agents[k][1]-1] if two_agents[k][1]-1 >= 0 else None
+                        right = self.my_map[two_agents[k][0]][two_agents[k][1]+1] if two_agents[k][1]+1 < len(self.my_map[0]) else None
                         directions = [up, down, left, right]
 
                         for m in directions:
-                            if m != False: open_cells +=1
+                            if m: open_cells +=1
 
                         if open_cells >= 3:
                             opened_agents += 1
@@ -189,13 +215,9 @@ class DistributedPlanningSolver(object):
                         continue
 
 
-                # Generating collision booleans
-                vertex_collided = 1 if a1_pos2 == a2_pos2 else 0
-                edge_collided = 1 if a1_pos1 == a2_pos2 and a2_pos1 == a1_pos2 else 0
-
                 # Handle collision
-                if vertex_collided or edge_collided:
-                    print(f'agents {i} (1{a1_pos1}, 2{a1_pos2}) & {j} (1{a2_pos1}, 2{a2_pos2}) have a collision!\nVertex? {vertex_collided}\nedge? {edge_collided}')
+                if self.check_collision(i, j):
+                    print(f'agents {i} (1{a1_pos1}, 2{a1_pos2}) & {j} (1{a2_pos1}, 2{a2_pos2}) have a collision!')#\nVertex? {vertex_collided}\nedge? {edge_collided}')
                     
                     if self.agents[i].is_on_goal() or self.agents[j].is_on_goal():
                         # print("Goal constraint!")
@@ -239,15 +261,15 @@ class DistributedPlanningSolver(object):
             
             n_finished = 0
             for agent in self.agents:
-                print(f'agent{agent.id} planned (i have goal = {agent.goal}):{self.agents[agent.id].planned_path}\n has moved from \n{agent.pos} to')
+                #print(f'agent{agent.id} planned (i have goal = {agent.goal}):{self.agents[agent.id].planned_path}\n has moved from \n{agent.pos} to')
                 agent.move_with_plan(self.t)
-                print(f'{agent.pos}\nnow it has a recorded path of {agent.path}\n')
+                #print(f'{agent.pos}\nnow it has a recorded path of {agent.path}\n')
                 
                 n_finished = n_finished + agent.is_on_goal()
 
             # Ending simulation if all agents are on goals
             if n_finished == len(self.agents): all_finished = True
-            elif self.t > 22: all_finished = True
+            elif self.t > 50: all_finished = True
             
             print(f'finished for time: {self.t}')
             self.t = self.t + 1
