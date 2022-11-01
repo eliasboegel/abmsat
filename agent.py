@@ -91,7 +91,7 @@ class AgentDistributed(object):
     def position_at(self, t):
         if t < 0:
             return self.start
-        elif t > self.planned_path_t:
+        elif t > self.planned_path_t and self.planned_path is not None:
             if t >= (self.planned_path_t + len(self.planned_path) if self.planned_path is not None else 0):
                 # print(f'returning goal, agent {self.id} has plannt t of {self.planned_path_t}')
                 return self.planned_path[-1]
