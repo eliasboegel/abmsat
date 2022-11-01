@@ -1,37 +1,43 @@
 # script to randomize starting and goal locations for set number of agents
 import numpy as np
+class CreateMaps(object):
+    def __init__(self, agent_counts, input_string, sample_count):
+        self.input_string = input_string
+        
+        for agent_num in agent_counts:
+            for sample_num in range(sample_count):
+                self.create_map(agent_num, sample_num)
 
-empty_map = open('01_skeleton_map.txt', 'r').read()
-agent_count = 6
-agent_string = str(agent_count)
-locs = []
-
-def loc_gen(existing_loc):
-    a = np.random.randint(9)
-    b = np.random.randint(2)
-
-    c = np.random.randint(9)
-    d = 21-np.random.randint(2)
-    start = [a,b]
-    goal = [c,d]
-    if start in existing_loc or goal in existing_loc:
-        start, goal = loc_gen(existing_loc)
-    return start, goal
+    def initialize_all_combos(self):
+        self.starts = []
+        self.ends = []
+        
+        # generating all start and end locations
+        for i in range(2):
+            for j in range(9):
+                start, end = str(j) + " " + str(i), str(j) + " " + str(20+i)
+                self.starts.append(start)
+                self.ends.append(end)
     
+    def create_map(self, agent_num, map_num):
+        self.initialize_all_combos()
 
-for i in range(agent_count):
-    start, goal = loc_gen(locs)
-    locs.append(start)
-    locs.append(goal)
-    agent_string += '\n' + str(start[0]) + ' ' + str(start[1]) + ' ' + str(goal[0]) + ' ' + str(goal[1])
+        file_addition = '\n' + str(agent_num)
+
+        for i in range(agent_num):
+            sample = np.random.randint(len(self.starts), size=2)
+            start = self.starts.pop(sample[0])
+            end = self.ends.pop(sample[1])
+            file_addition += '\n' + start + " " + end
+
+        print(file_addition)
+        
+        output_string = self.input_string + file_addition
+
+        output_map = open(f'map1_{agent_num}_{map_num}.txt', 'w')
+        output_map.write(output_string)
+        output_map.close()
 
 
-print(agent_string)
-
-final_string = empty_map + '\n' + agent_string
-
-print(final_string)
-
-file = open('0trial.txt', 'w')
-file.write(final_string)
-file.close()
+skeleton_file = open('01_skeleton_map.txt', 'r').read()
+CreateMaps(agent_counts=[6,8,10], input_string=skeleton_file, sample_count=8)
