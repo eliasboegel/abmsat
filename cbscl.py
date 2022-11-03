@@ -253,7 +253,7 @@ class CBSCLSolver(object):
                 if (new_path is not None):
 
                     # Cycle limiting
-                    min_repeats_to_assume_cycle = 5 # Number of repeating sequences needed before node is deemed cycling indefinitely, lower numbers limit more agressively, but also more incorrectly
+                    min_repeats_to_assume_cycle = 2 # Number of repeating sequences needed before node is deemed cycling indefinitely, lower numbers limit more agressively, but also more incorrectly
                     cycle_detected = False
                     test_paths = p['paths'].copy()
                     test_paths.append(p['paths'][-1].copy())
