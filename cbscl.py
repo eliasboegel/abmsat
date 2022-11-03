@@ -171,7 +171,7 @@ class CBSCLSolver(object):
         # collisions     - list of collisions in paths
         root = {'cost': 0,
                 'constraints': [],
-                'paths': [],
+                'paths': [[]],
                 'collisions': [],
                 'history': []}
 
@@ -181,10 +181,10 @@ class CBSCLSolver(object):
                           i, root['constraints'])
             if path is None:
                 raise BaseException('No solutions')
-            root['paths'].append(path)
+            root['paths'][0].append(path)
 
-        root['cost'] = get_sum_of_cost(root['paths'])
-        root['collisions'] = detect_collisions(root['paths'])
+        root['cost'] = get_sum_of_cost(root['paths'][-1])
+        root['collisions'] = detect_collisions(root['paths'][-1])
         self.push_node(root)
 
         # Task 3.1: Testing
@@ -212,13 +212,13 @@ class CBSCLSolver(object):
             #print(f"Original paths: {p['paths']}")
 
             # Detect collisions between all agents
-            p['collisions'] = detect_collisions(p['paths'])
+            p['collisions'] = detect_collisions(p['paths'][-1])
             #print(f"pre-replan path: {p['paths']}")
             #print(f"#collisions: { len(p['collisions'])}")
             #print(f"last collision: {p['collisions']}")
 
             # Return current paths if no collisions were detected between them
-            if not p['collisions']: return p['paths']
+            if not p['collisions']: return p['paths'][-1]
 
             # Select one arbitrary (in this case first) collision from all detected collisions
             collision = p['collisions'][0]
@@ -227,18 +227,17 @@ class CBSCLSolver(object):
             constraints = disjoint_splitting(collision) if disjoint else standard_splitting(collision)
             #print(f"new constraints: {constraints}")
 
-            # Cycle detection step
-            for path in p['history']:
-                print("IMPLEMENTATION MISSING")
+
 
             # Iterate through all constraints generated
             #agent_selector = random.randrange(0, 2)
             for new_constraint in constraints: #[constraints[agent_selector]]:
                 # Create new blank node with the newly generated constraints and previous paths
                 q = {
-                    'constraints': p['constraints'].copy() + [new_constraint],
-                    'paths': p['paths'].copy()
+                    'constraints': p['constraints'].copy() + [new_constraint]
                 }
+
+                
 
                 # Retrieve index of agent for which the current constraint was generated
                 agent = new_constraint['agent']
@@ -251,14 +250,36 @@ class CBSCLSolver(object):
                 # If a path was found, push the new node with updated path back to the open list
 
                 # Second part of conditional limits 1-timestep cycles
-                if (new_path is not None) and (new_path != p['paths'][agent]):
-                    q['paths'][agent] = new_path.copy()
-                    q['history'] = p['history'].copy() + [new_path.copy()]
-                    q['collisions'] = detect_collisions(q['paths'])
-                    q['cost'] = get_sum_of_cost(q['paths'])
-                    #print(f"Same path as previous node: {p['paths'][agent] == q['paths'][agent]}\n")
-                    self.push_node(q)
-                    #print(f"q path: {q['paths']}")
+                if (new_path is not None):
+
+                    # Cycle limiting
+                    min_repeats_to_assume_cycle = 5 # Number of repeating sequences needed before node is deemed cycling indefinitely, lower numbers limit more agressively, but also more incorrectly
+                    cycle_detected = False
+                    test_paths = p['paths'].copy()
+                    test_paths.append(p['paths'][-1].copy())
+                    test_paths[-1][agent] = new_path.copy()
+                    for cycle_length in range(1, len(test_paths) // (min_repeats_to_assume_cycle+1)): # Max cycle length is the maximum length that can fit at least twice into the path history
+                        all_same = True
+                        for i in range(min_repeats_to_assume_cycle):
+                            last_n_history = test_paths[-cycle_length:] # Path history for all agents for last n nodes of the parent nodes, where n = cycle length
+                            n_history_before_last = test_paths[-(min_repeats_to_assume_cycle+1)*cycle_length:-min_repeats_to_assume_cycle*cycle_length] # Path history for all agents for set of n parent nodes before the last n parent nodes
+                            
+                            if last_n_history != n_history_before_last:
+                                all_same = False
+
+                        if all_same:
+                            cycle_detected = True
+                            print(f"Cycle of length {cycle_length} detected, closing node!")
+                            break
+
+                    if not cycle_detected:
+                        q['paths'] = test_paths
+                        q['history'] = p['history'].copy() + [new_path.copy()]
+                        q['collisions'] = detect_collisions(q['paths'][-1])
+                        q['cost'] = get_sum_of_cost(q['paths'][-1])
+                        #print(f"Same path as previous node: {p['paths'][agent] == q['paths'][agent]}\n")
+                        self.push_node(q)
+                        #print(f"q path: {q['paths']}")
                 #else:
                     #print("Solution not found")
             #print( '------------------------------')
