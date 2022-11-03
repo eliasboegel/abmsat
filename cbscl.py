@@ -204,7 +204,7 @@ class CBSCLSolver(object):
 
         # While open nodes still exist
         while self.open_list:
-            print(len(self.open_list))
+            # print(len(self.open_list))
             
             # Retrieve open node and remove it from list
             p = self.pop_node()
@@ -251,15 +251,15 @@ class CBSCLSolver(object):
                     q['cost'] = get_sum_of_cost(q['paths'])
                     self.push_node(q)
                     #print(f"q path: {q['paths']}")
-                else:
-                    print("Solution not found")
+                # else:
+                    # print("Solution not found")
             #print( '------------------------------')
 
 
     def print_results(self, node):
-        print("\n Found a solution! \n")
+        # print("\n Found a solution! \n")
         CPU_time = timer.time() - self.start_time
-        print("CPU time (s):    {:.2f}".format(CPU_time))
-        print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
-        print("Expanded nodes:  {}".format(self.num_of_expanded))
-        print("Generated nodes: {}".format(self.num_of_generated))
+        # print("CPU time (s):    {:.2f}".format(CPU_time))
+        # print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
+        # print("Expanded nodes:  {}".format(self.num_of_expanded))
+        # print("Generated nodes: {}".format(self.num_of_generated))

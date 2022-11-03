@@ -173,8 +173,8 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_depen
     open_list = []
     closed_list = dict()
     constraint_table = build_constraint_table(constraints, agent)
-    print(f'\n-------------Planning for agent {agent}-------------')    
-    print(f'agent {agent}\'s constraint table: {constraint_table}')
+    # print(f'\n-------------Planning for agent {agent}-------------')    
+    # print(f'agent {agent}\'s constraint table: {constraint_table}')
 
     # setting up root node and adding it to open and closed list, to initiate the algorithm
     h_value = h_values[start_loc]
@@ -253,5 +253,4 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, time_depen
                     push_node(open_list, child)
             # else:
             #     print('direction is out of map\n')
-    print("A* failed to find solution!")
     return None  # Failed to find solutions

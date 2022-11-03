@@ -49,8 +49,8 @@ class AgentDistributed(object):
 
         if self.last_tried_path: # need to update planned_path_t if agent tries another path and this another path works 
             self.planned_path_t = t
-        else:
-            print('none')
+        # else:
+        #     print('none')
 
         return self.last_tried_path
 

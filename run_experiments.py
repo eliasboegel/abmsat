@@ -7,6 +7,7 @@ Note: To make the animation work in Spyder you should set graphics backend to 'A
 #!/usr/bin/python
 import argparse
 import glob
+import timeit
 from pathlib import Path
 from cbs import CBSSolver
 from cbscl import CBSCLSolver
@@ -110,6 +111,8 @@ def import_mapf_instance(filename):
 
 
 if __name__ == '__main__':
+
+    toc = timeit.default_timer()
     parser = argparse.ArgumentParser(description='Runs various MAPF algorithms')
     parser.add_argument('--instance', type=str, default=None,
                         help='The name of the instance file(s)')
@@ -125,31 +128,36 @@ if __name__ == '__main__':
     # In PyCharm, they can be added as parameters in the configuration.
 
     result_file = open("results.csv", "w", buffering=1)
-
+    t = 0
+    print(f'\n******Running {args.solver} solver******\n')
     for file in sorted(glob.glob(args.instance)):
-
-        print("***Import an instance***")
+        t+=1
+        tong = timeit.default_timer()
+        if t%100 == 0:
+            print(f"Time passed: {round(tong - toc,5)} seconds")
+        # try:
+        # print("***Import an instance***")
         my_map, starts, goals = import_mapf_instance(file)
-        print_mapf_instance(my_map, starts, goals)
+        # print_mapf_instance(my_map, starts, goals)
 
         if args.solver == "CBS":
-            print("***Run CBS***")
+            # print("***Run CBS***")
             cbs = CBSSolver(my_map, starts, goals)
             paths = cbs.find_solution(args.disjoint)
         elif args.solver == "CBSCL":
-            print("***Run CBS, Cycle Limited***")
+            # print("***Run CBS, Cycle Limited***")
             solver = CBSCLSolver(my_map, starts, goals)
             paths = solver.find_solution()
         elif args.solver == "Independent":
-            print("***Run Independent***")
+            # print("***Run Independent***")
             solver = IndependentSolver(my_map, starts, goals)
             paths = solver.find_solution()
         elif args.solver == "Prioritized":
-            print("***Run Prioritized***")
+            # print("***Run Prioritized***")
             solver = PrioritizedPlanningSolver(my_map, starts, goals)
             paths = solver.find_solution()
         elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-            print("***Run Distributed Planning***")
+            # print("***Run Distributed Planning***")
             solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
             paths = solver.find_solution()
         else: 
@@ -165,4 +173,9 @@ if __name__ == '__main__':
             # animation.animate_continuously()
             # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
             animation.show()
+        # except:
+        #     result_file.write("{},{}\n".format(file, 99999))
     result_file.close()
+
+    tic = timeit.default_timer()
+    print(f'\n\n******Finished all experiments!!****** \nTotal Time elapsed: {round(tic - toc,5)} seconds')

@@ -41,18 +41,18 @@ class PrioritizedPlanningSolver(object):
             result.append(path)
             constraint = [] 
             
-            print(f'agent {i} has path: {path}')
+            # print(f'agent {i} has path: {path}')
             for k in range(i+1, self.num_of_agents):
                 constraint = constraint + (constrain_path(path, k))
 
             constraints = constraints + constraint
 
             ##############################
-        print(f'this is result {result}')
+        # print(f'this is result {result}')
         self.CPU_time = timer.time() - start_time
 
-        print("\nFound a solution!\n")
-        print("CPU time (s):    {:.10f}".format(self.CPU_time))
-        print("Sum of costs:    {}".format(get_sum_of_cost(result)))
-        print(result)
+        # print("\nFound a solution!\n")
+        # print("CPU time (s):    {:.10f}".format(self.CPU_time))
+        # print("Sum of costs:    {}".format(get_sum_of_cost(result)))
+        # print(result)
         return result

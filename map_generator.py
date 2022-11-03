@@ -1,7 +1,9 @@
-# script to randomize starting and goal locations for set number of agents
-import numpy as np
+# script to generate a set number of map files each with different start and goal locations and different number of agents
+import numpy as np, timeit
+
 class CreateMaps(object):
-    def __init__(self, agent_counts, input_string, sample_count):
+    def __init__(self, file_name, agent_counts, input_string, sample_count):
+        self.file_name = file_name
         self.input_string = input_string
         
         for agent_num in agent_counts:
@@ -9,6 +11,7 @@ class CreateMaps(object):
                 self.create_map(agent_num, sample_num)
 
     def initialize_all_combos(self):
+        """Initializes all possible start and goal locations for a given map """
         self.starts = []
         self.ends = []
         
@@ -20,6 +23,7 @@ class CreateMaps(object):
                 self.ends.append(end)
     
     def create_map(self, agent_num, map_num):
+        """Creates a map file with a given number of agents and a given map number"""
         self.initialize_all_combos()
 
         file_addition = '\n' + str(agent_num)
@@ -30,14 +34,28 @@ class CreateMaps(object):
             end = self.ends.pop(sample[1])
             file_addition += '\n' + start + " " + end
 
-        print(file_addition)
+        # print(file_addition)
         
         output_string = self.input_string + file_addition
 
-        output_map = open(f'map1_{agent_num}_{map_num}.txt', 'w')
+        # creating a map.txt file
+        output_map = open(f'{self.file_name}{agent_num}_{map_num}.txt', 'w')
         output_map.write(output_string)
         output_map.close()
 
 
-skeleton_file = open('01_skeleton_map.txt', 'r').read()
-CreateMaps(agent_counts=[6,8,10], input_string=skeleton_file, sample_count=8)
+use_map = "map1"
+
+skeletons = {
+    "map1": "instances/map1_skeleton.txt",
+    "map2": "instances/map2_skeleton.txt",
+    "map3": "instances/map3_skeleton.txt"
+}
+file_name = "instances/" + use_map + "/" + use_map + "_"
+skeleton_file = open(skeletons[use_map], 'r').read()
+
+print('Creating maps...')
+toc = timeit.default_timer()
+CreateMaps(file_name=file_name, agent_counts=[12], input_string=skeleton_file, sample_count=8)
+tic = timeit.default_timer()
+print(f'Finished creating all files in {round(tic-toc,5)} seconds')
