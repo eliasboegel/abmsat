@@ -12,6 +12,14 @@ def get_sum_of_cost(paths):
         rst += len(path) - 1
     return rst
 
+def get_trip_length(paths):
+    length = 0
+    for path in paths:
+        for i in range(len(path)-1):
+            loc1, loc2 = path[i], path[i+1]
+            if loc1 != loc2:
+                length += 1            
+    return length
 
 def compute_heuristics(my_map, goal):
     # Use Dijkstra to build a shortest-path tree rooted at the goal location

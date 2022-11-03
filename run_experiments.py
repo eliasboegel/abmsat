@@ -5,6 +5,7 @@ Note: To make the animation work in Spyder you should set graphics backend to 'A
 """
 
 #!/usr/bin/python
+import csv
 import argparse
 import glob
 import timeit
@@ -15,7 +16,7 @@ from independent import IndependentSolver
 from prioritized import PrioritizedPlanningSolver
 from distributed import DistributedPlanningSolver # Placeholder for Distributed Planning
 from visualize import Animation
-from single_agent_planner import get_sum_of_cost
+from single_agent_planner import get_sum_of_cost, get_trip_length
 
 SOLVER = "CBS"
 
@@ -124,47 +125,63 @@ if __name__ == '__main__':
                         help='The solver to use (one of: {CBS,CBSCL,Independent,Prioritized}), defaults to ' + str(SOLVER))
 
     args = parser.parse_args()
-    # Hint: Command line options can be added in Spyder by pressing CTRL + F6 > Command line options. 
-    # In PyCharm, they can be added as parameters in the configuration.
-
     result_file = open("results.csv", "w", buffering=1)
+
     t = 0
+    experiments_dict = {}
+
     print(f'\n******Running {args.solver} solver******\n')
+    result_file.write(f"map_id,trip durations,trip lengths\n")
     for file in sorted(glob.glob(args.instance)):
         t+=1
         tong = timeit.default_timer()
         if t%100 == 0:
             print(f"Time passed: {round(tong - toc,5)} seconds")
-        # try:
-        # print("***Import an instance***")
+
+
         my_map, starts, goals = import_mapf_instance(file)
-        # print_mapf_instance(my_map, starts, goals)
 
-        if args.solver == "CBS":
-            # print("***Run CBS***")
-            cbs = CBSSolver(my_map, starts, goals)
-            paths = cbs.find_solution(args.disjoint)
-        elif args.solver == "CBSCL":
-            # print("***Run CBS, Cycle Limited***")
-            solver = CBSCLSolver(my_map, starts, goals)
-            paths = solver.find_solution()
-        elif args.solver == "Independent":
-            # print("***Run Independent***")
-            solver = IndependentSolver(my_map, starts, goals)
-            paths = solver.find_solution()
-        elif args.solver == "Prioritized":
-            # print("***Run Prioritized***")
-            solver = PrioritizedPlanningSolver(my_map, starts, goals)
-            paths = solver.find_solution()
-        elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-            # print("***Run Distributed Planning***")
-            solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
-            paths = solver.find_solution()
-        else: 
-            raise RuntimeError("Unknown solver!")
+        if not args.batch:
+            print_mapf_instance(my_map, starts, goals)
 
-        cost = get_sum_of_cost(paths)
-        result_file.write("{},{}\n".format(file, cost))
+        # lazy error handling try/except statements :(
+        try:
+        # print("***Import an instance***")
+            if args.solver == "CBS":
+                solver = CBSSolver(my_map, starts, goals)
+            elif args.solver == "CBSCL":
+                solver = CBSCLSolver(my_map, starts, goals)
+            elif args.solver == "Independent":
+                solver = IndependentSolver(my_map, starts, goals)
+            elif args.solver == "Prioritized":
+                solver = PrioritizedPlanningSolver(my_map, starts, goals)
+            elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
+                solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
+            else: 
+                raise RuntimeError("Unknown solver!")
+            paths = solver.find_solution()
+
+            trip_duration = get_sum_of_cost(paths)
+            trip_length = get_trip_length(paths)
+            
+            #spliting the file string to obtain the map id
+            map_id = file.split('\\')[-1].replace('.','_').split('_')[0:3]
+            existing_keys = experiments_dict.keys()
+            experiment_id = args.solver + '_' + map_id[0] + '_' + map_id[1]
+
+            if experiment_id not in existing_keys:
+                experiments_dict[experiment_id] = [[trip_duration] , [trip_length]]
+            elif experiment_id in existing_keys:
+                experiments_dict[experiment_id][0] += [trip_duration]
+                experiments_dict[experiment_id][1] += [trip_length]
+
+            # print(f'\n\nahhhh {experiments_dict}')
+            
+            # print(f"Sum of lengths: {trip_length}")
+            result_file.write(f"{file},{trip_duration},{trip_length}\n")
+        except:
+            result_file.write(f"{file},{99999}\n")
+
 
 
         if not args.batch:
@@ -173,9 +190,24 @@ if __name__ == '__main__':
             # animation.animate_continuously()
             # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
             animation.show()
-        # except:
-        #     result_file.write("{},{}\n".format(file, 99999))
     result_file.close()
+
+    stats_file = open("stats.csv", "a")
+
+    all_keys = experiments_dict.keys()
+    for key in all_keys:
+        trip_durations = experiments_dict[key][0]
+        trip_lengths = experiments_dict[key][1]
+        
+        avg_durations = sum(trip_durations)/len(trip_durations)
+        avg_lengths = sum(trip_lengths)/len(trip_lengths)
+
+        successful_samples = len(trip_durations)
+        # print(f'{key},{trip_durations},{trip_lengths}')
+        
+        stats_file.write(f"{key},{avg_durations},{avg_lengths},{successful_samples}\n")
+
+
 
     tic = timeit.default_timer()
     print(f'\n\n******Finished all experiments!!****** \nTotal Time elapsed: {round(tic - toc,5)} seconds')

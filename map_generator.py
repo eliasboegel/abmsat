@@ -56,6 +56,6 @@ skeleton_file = open(skeletons[use_map], 'r').read()
 
 print('Creating maps...')
 toc = timeit.default_timer()
-CreateMaps(file_name=file_name, agent_counts=[12], input_string=skeleton_file, sample_count=8)
+CreateMaps(file_name=file_name, agent_counts=[9, 11, 13, 15], input_string=skeleton_file, sample_count=105)
 tic = timeit.default_timer()
 print(f'Finished creating all files in {round(tic-toc,5)} seconds')
