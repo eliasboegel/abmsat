@@ -128,19 +128,34 @@ if __name__ == '__main__':
     result_file = open("results.csv", "w", buffering=1)
 
     t = 0
+    exp_samples = 1
+    exp_sample_list = []
+    last_exp_id = ''
     experiments_dict = {}
 
     print(f'\n******Running {args.solver} solver******\n')
     result_file.write(f"map_id,trip durations,trip lengths\n")
+
     for file in sorted(glob.glob(args.instance)):
         t+=1
         tong = timeit.default_timer()
-        if t%100 == 0:
+        if t%50 == 0:
             print(f"Time passed: {round(tong - toc,5)} seconds")
 
 
         my_map, starts, goals = import_mapf_instance(file)
 
+        #spliting the file string to obtain the map id
+        map_id = file.split('\\')[-1].replace('.','_').split('_')[0:3]
+        existing_keys = experiments_dict.keys()
+        experiment_id = args.solver + '_' + map_id[0] + '_' + map_id[1]
+        if experiment_id == last_exp_id:
+            exp_samples += 1
+        else:
+            exp_sample_list.append(exp_samples)
+            exp_samples = 1
+        last_exp_id = experiment_id
+        
         if not args.batch:
             print_mapf_instance(my_map, starts, goals)
 
@@ -164,24 +179,16 @@ if __name__ == '__main__':
             trip_duration = get_sum_of_cost(paths)
             trip_length = get_trip_length(paths)
             
-            #spliting the file string to obtain the map id
-            map_id = file.split('\\')[-1].replace('.','_').split('_')[0:3]
-            existing_keys = experiments_dict.keys()
-            experiment_id = args.solver + '_' + map_id[0] + '_' + map_id[1]
 
             if experiment_id not in existing_keys:
                 experiments_dict[experiment_id] = [[trip_duration] , [trip_length]]
             elif experiment_id in existing_keys:
                 experiments_dict[experiment_id][0] += [trip_duration]
                 experiments_dict[experiment_id][1] += [trip_length]
-
-            # print(f'\n\nahhhh {experiments_dict}')
-            
-            # print(f"Sum of lengths: {trip_length}")
+                
             result_file.write(f"{file},{trip_duration},{trip_length}\n")
         except:
             result_file.write(f"{file},{99999}\n")
-
 
 
         if not args.batch:
@@ -190,24 +197,30 @@ if __name__ == '__main__':
             # animation.animate_continuously()
             # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
             animation.show()
+
+    tic = timeit.default_timer()
+    total_time = round(tic - toc,5)
+    print(f'\n\n******Finished all experiments!!****** \nTotal Time elapsed: {total_time} seconds')
+    print(f'loop ran {t} times')
     result_file.close()
 
-    stats_file = open("stats.csv", "a")
 
-    all_keys = experiments_dict.keys()
+    # recording all the statistics for each experiment
+    stats_file = open("stats.csv", "a")
+    all_keys = list(experiments_dict.keys())
     for key in all_keys:
+        # key = all_keys[i]
+        samples_taken = exp_sample_list[-1]
+
         trip_durations = experiments_dict[key][0]
         trip_lengths = experiments_dict[key][1]
         
         avg_durations = sum(trip_durations)/len(trip_durations)
         avg_lengths = sum(trip_lengths)/len(trip_lengths)
-
         successful_samples = len(trip_durations)
-        # print(f'{key},{trip_durations},{trip_lengths}')
         
-        stats_file.write(f"{key},{avg_durations},{avg_lengths},{successful_samples}\n")
+        # need to change total time time taken to run each agent count
+        stats_file.write(f"{key},{avg_durations},{avg_lengths},{successful_samples},{samples_taken},{total_time}\n")
 
 
 
-    tic = timeit.default_timer()
-    print(f'\n\n******Finished all experiments!!****** \nTotal Time elapsed: {round(tic - toc,5)} seconds')
