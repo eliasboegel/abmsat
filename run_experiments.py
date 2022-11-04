@@ -195,9 +195,16 @@ if __name__ == '__main__':
             except:
                 result_file.write(f"{file},{999999}\n")
         elif not args.batch:
+            solve_start = timeit.default_timer()
             paths = solver.find_solution()
-            print(f'Solver returned solution: {paths}') 
+            solve_end = timeit.default_timer()
 
+            solver_time = round(solve_end - solve_start, 8)
+            trip_duration = get_sum_of_cost(paths)
+            trip_length = get_trip_length(paths)
+
+            print(f'Solver returned solution: {paths}\nTotal trip duration for all agents: {trip_duration}\nTotal trip length for all agents: {trip_length}\nSolver time: {solver_time}\n')
+            
             print_mapf_instance(my_map, starts, goals)
 
             print("***Test paths on a simulation***")
