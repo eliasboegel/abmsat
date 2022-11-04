@@ -50,7 +50,7 @@ class PrioritizedPlanningSolver(object):
             ##############################
         # print(f'this is result {result}')
         self.CPU_time = timer.time() - start_time
-
+        
         # print("\nFound a solution!\n")
         # print("CPU time (s):    {:.10f}".format(self.CPU_time))
         # print("Sum of costs:    {}".format(get_sum_of_cost(result)))

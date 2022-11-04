@@ -7,6 +7,7 @@ class CreateMaps(object):
         self.input_string = input_string
         
         for agent_num in agent_counts:
+            self.file_addition_storage = []
             for sample_num in range(sample_count):
                 self.create_map(agent_num, sample_num)
 
@@ -34,17 +35,23 @@ class CreateMaps(object):
             end = self.ends.pop(sample[1])
             file_addition += '\n' + start + " " + end
 
-        # print(file_addition)
-        
-        output_string = self.input_string + file_addition
+        # Checkin if the map already exist
+        if file_addition in self.file_addition_storage:
+            print('whoops, made a map which already exists')
+            self.create_map(agent_num, map_num)
+        else:
+            # print('cool, map doesn\'t already exists')
+            self.file_addition_storage.append(file_addition)
+            
+            output_string = self.input_string + file_addition
 
-        # creating a map.txt file
-        output_map = open(f'{self.file_name}{agent_num}_{map_num}.txt', 'w')
-        output_map.write(output_string)
-        output_map.close()
+            # creating a map.txt file
+            output_map = open(f'{self.file_name}{agent_num}_{map_num}.txt', 'w')
+            output_map.write(output_string)
+            output_map.close()
 
 
-use_map = "map1"
+use_map = "map3"
 
 skeletons = {
     "map1": "instances/map1_skeleton.txt",
@@ -56,6 +63,6 @@ skeleton_file = open(skeletons[use_map], 'r').read()
 
 print('Creating maps...')
 toc = timeit.default_timer()
-CreateMaps(file_name=file_name, agent_counts=[9, 11, 13, 15], input_string=skeleton_file, sample_count=105)
+CreateMaps(file_name=file_name, agent_counts=[6, 10, 14, 18], input_string=skeleton_file, sample_count=75)
 tic = timeit.default_timer()
 print(f'Finished creating all files in {round(tic-toc,5)} seconds')

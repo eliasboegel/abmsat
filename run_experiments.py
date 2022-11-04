@@ -125,7 +125,6 @@ if __name__ == '__main__':
                         help='The solver to use (one of: {CBS,CBSCL,Independent,Prioritized}), defaults to ' + str(SOLVER))
 
     args = parser.parse_args()
-    result_file = open("results.csv", "w", buffering=1)
 
     t = 0
     exp_samples = 1
@@ -134,74 +133,84 @@ if __name__ == '__main__':
     experiments_dict = {}
 
     print(f'\n******Running {args.solver} solver******\n')
+
+    result_file = open("results.csv", "w", buffering=1)
     result_file.write(f"map_id,trip durations,trip lengths\n")
 
     for file in sorted(glob.glob(args.instance)):
         t+=1
         tong = timeit.default_timer()
+
+        # displaying progress
         if t%50 == 0:
             print(f"Time passed: {round(tong - toc,5)} seconds")
 
-
         my_map, starts, goals = import_mapf_instance(file)
 
-        #spliting the file string to obtain the map id
-        map_id = file.split('\\')[-1].replace('.','_').split('_')[0:3]
-        existing_keys = experiments_dict.keys()
-        experiment_id = args.solver + '_' + map_id[0] + '_' + map_id[1]
-        if experiment_id == last_exp_id:
-            exp_samples += 1
-        else:
-            exp_sample_list.append(exp_samples)
-            exp_samples = 1
-        last_exp_id = experiment_id
-        
-        if not args.batch:
+        # print("***Import an instance***")
+        if args.solver == "CBS":
+            solver = CBSSolver(my_map, starts, goals)
+        elif args.solver == "CBSCL":
+            solver = CBSCLSolver(my_map, starts, goals)
+        elif args.solver == "Independent":
+            solver = IndependentSolver(my_map, starts, goals)
+        elif args.solver == "Prioritized":
+            solver = PrioritizedPlanningSolver(my_map, starts, goals)
+        elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
+            solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
+        else: 
+            raise RuntimeError("Unknown solver!")
+
+        if args.batch:
+            #spliting the file string to obtain the map id
+            map_id = file.split('\\')[-1].replace('.','_').split('_')[0:3]
+            existing_keys = experiments_dict.keys()
+            experiment_id = args.solver + '_' + map_id[0] + '_' + map_id[1]
+            # print(experiment_id)
+            if experiment_id == last_exp_id:
+                exp_samples += 1
+            else:
+                exp_sample_list.append(exp_samples)
+                exp_samples = 1
+            last_exp_id = experiment_id
+            # lazy error handling try/except statements :(
+            try:
+                solve_start = timeit.default_timer()
+                paths = solver.find_solution()
+                solve_end = timeit.default_timer()
+                
+                solver_time = round(solve_end - solve_start, 8)
+                trip_duration = get_sum_of_cost(paths)
+                trip_length = get_trip_length(paths)
+
+
+                if experiment_id not in existing_keys:
+                    experiments_dict[experiment_id] = [[trip_duration] , [trip_length], [solver_time]]
+                elif experiment_id in existing_keys:
+                    experiments_dict[experiment_id][0] += [trip_duration]
+                    experiments_dict[experiment_id][1] += [trip_length]
+                    experiments_dict[experiment_id][2] += [solver_time]
+
+                result_file.write(f"{file},{trip_duration},{trip_length}\n")
+            except:
+                result_file.write(f"{file},{999999}\n")
+        elif not args.batch:
+            paths = solver.find_solution()
+            print(f'Solver returned solution: {paths}') 
+
             print_mapf_instance(my_map, starts, goals)
 
-        # lazy error handling try/except statements :(
-        try:
-        # print("***Import an instance***")
-            if args.solver == "CBS":
-                solver = CBSSolver(my_map, starts, goals)
-            elif args.solver == "CBSCL":
-                solver = CBSCLSolver(my_map, starts, goals)
-            elif args.solver == "Independent":
-                solver = IndependentSolver(my_map, starts, goals)
-            elif args.solver == "Prioritized":
-                solver = PrioritizedPlanningSolver(my_map, starts, goals)
-            elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-                solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
-            else: 
-                raise RuntimeError("Unknown solver!")
-            paths = solver.find_solution()
-
-            trip_duration = get_sum_of_cost(paths)
-            trip_length = get_trip_length(paths)
-            
-
-            if experiment_id not in existing_keys:
-                experiments_dict[experiment_id] = [[trip_duration] , [trip_length]]
-            elif experiment_id in existing_keys:
-                experiments_dict[experiment_id][0] += [trip_duration]
-                experiments_dict[experiment_id][1] += [trip_length]
-                
-            result_file.write(f"{file},{trip_duration},{trip_length}\n")
-        except:
-            result_file.write(f"{file},{99999}\n")
-
-
-        if not args.batch:
             print("***Test paths on a simulation***")
             animation = Animation(my_map, starts, goals, paths)
             # animation.animate_continuously()
             # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
             animation.show()
 
+
     tic = timeit.default_timer()
-    total_time = round(tic - toc,5)
+    total_time = round(tic - toc,8)
     print(f'\n\n******Finished all experiments!!****** \nTotal Time elapsed: {total_time} seconds')
-    print(f'loop ran {t} times')
+    # print(f'loop ran {t} times')
     result_file.close()
 
 
@@ -214,13 +223,15 @@ if __name__ == '__main__':
 
         trip_durations = experiments_dict[key][0]
         trip_lengths = experiments_dict[key][1]
+        solver_times = experiments_dict[key][2]
         
         avg_durations = sum(trip_durations)/len(trip_durations)
         avg_lengths = sum(trip_lengths)/len(trip_lengths)
+        avg_solver_times = sum(solver_times)/len(solver_times)
         successful_samples = len(trip_durations)
         
-        # need to change total time time taken to run each agent count
-        stats_file.write(f"{key},{avg_durations},{avg_lengths},{successful_samples},{samples_taken},{total_time}\n")
+        stats_file.write(f"{key},{avg_durations},{avg_lengths},{successful_samples},{samples_taken},{avg_solver_times}\n")
+    
 
 
 
