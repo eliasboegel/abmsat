@@ -5,7 +5,9 @@ from matplotlib.patches import Circle, Rectangle
 import numpy as np
 from matplotlib import animation
 
-Colors = ['green', 'blue', 'orange', 'dodgerblue', 'purple', 'pink', 'brown', 'yellow', 'black']
+Colors = ['forestgreen', 'blue', 'orange', 'dodgerblue', 'purple', 'blueviolet', 'salmon', 'goldenrod', 'black', 'orangered']
+
+# Colors = ['green', 'blue', 'orange', 'dodgerblue', 'purple', 'pink', 'brown', 'yellow', 'black']
 
 
 class Animation:
@@ -60,15 +62,20 @@ class Animation:
                                           edgecolor='black', alpha=0.5))
         for i in range(len(self.paths)):
             name = str(i)
-            self.agents[i] = Circle((starts[i][0], starts[i][1]), 0.3, facecolor=Colors[i % len(Colors)],
-                                    edgecolor='black')
+            self.agents[i] = Circle((starts[i][0], starts[i][1]), 0.3, facecolor=Colors[i % len(Colors)])
             self.agents[i].original_face_color = Colors[i % len(Colors)]
             self.patches.append(self.agents[i])
             self.T = max(self.T, len(paths[i]) - 1)
-            self.agent_names[i] = self.ax.text(starts[i][0], starts[i][1] + 0.25, name)
+            self.agent_names[i] = self.ax.text(starts[i][0], starts[i][1]-2, name, verticalalignment='center', color='white', fontsize=13)
             self.agent_names[i].set_horizontalalignment('center')
             self.agent_names[i].set_verticalalignment('center')
             self.artists.append(self.agent_names[i])
+
+
+            y = [len(my_map)-1-x[0] for x in paths[i]]
+            x = [x[1] for x in paths[i]]
+
+            plt.plot(x,y, linewidth=11.5, alpha=0.3, color=Colors[i % len(Colors)])
 
     # def animate_continuously(self):
         self.animation = animation.FuncAnimation(self.fig, self.animate_func,
@@ -76,8 +83,7 @@ class Animation:
                                                  frames=int(self.T + 1) * 10,
                                                  interval=20,
                                                  blit=True)
-
-
+        self.animation.save('anim.gif', writer='imagemagick')
     def animate_once(self, pathh):
         plt.ion()
         self.paths = pathh
@@ -87,6 +93,9 @@ class Animation:
                                                  interval=8,
                                                  blit=True,
                                                  repeat=False)
+                                                 
+                            
+        
         plt.pause(1)
         self.patches = []
         self.artists = []
@@ -116,7 +125,7 @@ class Animation:
         for k in range(len(self.paths)):
             pos = self.get_state(t / 10, self.paths[k])
             self.agents[k].center = (pos[0], pos[1])
-            self.agent_names[k].set_position((pos[0], pos[1] + 0.5))
+            self.agent_names[k].set_position((pos[0], pos[1]))
 
         # reset all colors
         for _, agent in self.agents.items():

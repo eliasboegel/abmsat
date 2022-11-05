@@ -1,4 +1,5 @@
 import time as timer
+import math
 import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost, get_path
@@ -202,9 +203,13 @@ class CBSCLSolver(object):
         #             3. Otherwise, choose the first collision and convert to a list of constraints (using your
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
-
+        limit = 3*math.factorial(self.num_of_agents+1)
         # While open nodes still exist
-        while self.open_list:
+        while self.open_list and len(self.open_list)<limit:
+            if len(self.open_list)%200==0:
+                print('open list length:', len(self.open_list))
+            if (len(self.open_list)+1) == limit:
+                raise BaseException('No solutions')
             # print(len(self.open_list))
             
             # Retrieve open node and remove it from list
@@ -253,7 +258,7 @@ class CBSCLSolver(object):
                 if (new_path is not None):
 
                     # Cycle limiting
-                    min_repeats_to_assume_cycle = 2 # Number of repeating sequences needed before node is deemed cycling indefinitely, lower numbers limit more agressively, but also more incorrectly
+                    min_repeats_to_assume_cycle = 1 # Number of repeating sequences needed before node is deemed cycling indefinitely, lower numbers limit more agressively, but also more incorrectly
                     cycle_detected = False
                     test_paths = p['paths'].copy()
                     test_paths.append(p['paths'][-1].copy())
@@ -269,7 +274,7 @@ class CBSCLSolver(object):
 
                         if all_same:
                             cycle_detected = True
-                            print(f"Cycle of length {cycle_length} detected, closing node!")
+                            # print(f"Cycle of length {cycle_length} detected, closing node!")
                             break
 
                     if not cycle_detected:

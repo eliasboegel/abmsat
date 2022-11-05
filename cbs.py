@@ -204,8 +204,13 @@ class CBSSolver(object):
         #           Ensure to create a copy of any objects that your child nodes might inherit
 
         # While open nodes still exist
-        while self.open_list:
-            print(len(self.open_list))
+        limit = 3*math.factorial(self.num_of_agents+1)
+        # While open nodes still exist
+        while self.open_list and len(self.open_list)<limit:
+            if len(self.open_list)%200==0:
+                print('open list length:', len(self.open_list))
+            if (len(self.open_list)+1) == limit:
+                raise BaseException('No solutions')
             
             # Retrieve open node and remove it from list
             p = self.pop_node()
