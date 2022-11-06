@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib import animation
 
 Colors = ['forestgreen', 'blue', 'orange', 'dodgerblue', 'purple', 'blueviolet', 'salmon', 'goldenrod', 'black', 'orangered']
-
+Colors = [(0, 32/255, 142/255), (13/255, 53/255, 184/255), (35/255,77/255,221/255), (13/255, 53/255, 184/255), (35/255,77/255,221/255), (64/255, 104/255, 239/255), (35/255,77/255,221/255), (64/255, 104/255, 239/255)]
 # Colors = ['green', 'blue', 'orange', 'dodgerblue', 'purple', 'pink', 'brown', 'yellow', 'black']
 
 
@@ -57,37 +57,37 @@ class Animation:
         # create agents:
         self.T = 0
         # draw goals first
-        for i, goal in enumerate(self.goals):
-            self.patches.append(Rectangle((goal[0] - 0.26, goal[1] - 0.24), 0.5, 0.5, facecolor=Colors[i % len(Colors)],
-                                          edgecolor='black', alpha=0.5))
+        # for i, goal in enumerate(self.goals):
+        #     self.patches.append(Rectangle((goal[0] - 0.26, goal[1] - 0.24), 0.5, 0.5, facecolor=Colors[i % len(Colors)],
+        #                                   edgecolor='black', alpha=0.5))
         for i in range(len(self.paths)):
             name = str(i)
             # self.agents[i] = Circle((starts[i][0], starts[i][1]), 0.3, facecolor=Colors[i % len(Colors)])
-            self.agents[i] = Rectangle((starts[i][0] - 0.26, starts[i][1] - 0.24), 0.5, 0.5, facecolor=Colors[i % len(Colors)], alpha=1)
+            self.agents[i] = Rectangle((starts[i][0], starts[i][1]), 0.97, 0.97, facecolor=Colors[i % len(Colors)], alpha=1)
             self.agents[i].original_face_color = Colors[i % len(Colors)]
             self.patches.append(self.agents[i])
             self.T = max(self.T, len(paths[i]) - 1)
-            self.agent_names[i] = self.ax.text(starts[i][0], starts[i][1]-2, name, verticalalignment='center', color='white', fontsize=14)
+            self.agent_names[i] = self.ax.text(starts[i][0], starts[i][1]-2, name, verticalalignment='center', color='white', fontsize=25)
             self.agent_names[i].set_horizontalalignment('center')
             self.agent_names[i].set_verticalalignment('center')
             self.artists.append(self.agent_names[i])
 
 
-            y = [len(my_map)-1-x[0] for x in paths[i]]
-            x = [x[1] for x in paths[i]]
+            # y = [len(my_map)-1-x[0] for x in paths[i]]
+            # x = [x[1] for x in paths[i]]
 
-            plt.plot(x,y, linewidth=11.5, alpha=0.3, color=Colors[i % len(Colors)])
+            # plt.plot(x,y, linewidth=11.5, alpha=0.3, color=Colors[i % len(Colors)])
 
     # def animate_continuously(self):
         self.animation = animation.FuncAnimation(self.fig, self.animate_func,
                                                  init_func=self.init_func,
-                                                 frames=int(self.T + 1) * 10,
+                                                 frames=int(self.T + 5) * 10,
                                                  interval=20,
                                                  blit=True)
-        #self.animation.save('anim.gif', writer='imagemagick', fps=25)
-    def animate_once(self, pathh):
+        self.animation.save('anim.gif', writer='ffmpeg', fps=25)  
+
+    def animate_once(self):
         plt.ion()
-        self.paths = pathh
         self.animation = animation.FuncAnimation(self.fig, self.animate_func,
                                                  init_func=self.init_func,
                                                  frames=int(self.T + 1) * 10,
@@ -125,7 +125,7 @@ class Animation:
             pos = self.get_state(t / 10, self.paths[k])
             # print(pos)
             # self.agents[k].center = (pos[0], pos[1])
-            self.agents[k].set_xy((pos[0]-0.26, pos[1]-0.24))
+            self.agents[k].set_xy((pos[0]-0.48, pos[1]-0.47))
             self.agent_names[k].set_position((pos[0], pos[1]))
 
         # reset all colors
