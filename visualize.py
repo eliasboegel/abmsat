@@ -9,7 +9,6 @@ Colors = ['forestgreen', 'blue', 'orange', 'dodgerblue', 'purple', 'blueviolet',
 
 # Colors = ['green', 'blue', 'orange', 'dodgerblue', 'purple', 'pink', 'brown', 'yellow', 'black']
 
-
 class Animation:
     def __init__(self, my_map, starts, goals, paths):
         
@@ -75,33 +74,33 @@ class Animation:
             y = [len(my_map)-1-x[0] for x in paths[i]]
             x = [x[1] for x in paths[i]]
 
-            plt.plot(x,y, linewidth=11.5, alpha=0.3, color=Colors[i % len(Colors)])
+            plt.plot(x,y, linewidth=11.5, alpha=0.1, color=Colors[i % len(Colors)])
 
     # def animate_continuously(self):
         self.animation = animation.FuncAnimation(self.fig, self.animate_func,
                                                  init_func=self.init_func,
-                                                 frames=int(self.T + 1) * 10,
-                                                 interval=20,
+                                                 frames=int(self.T + 5) * 10,
+                                                 interval=18,
                                                  blit=True)
-        self.animation.save('anim.gif', writer='imagemagick')
-    def animate_once(self, pathh):
-        plt.ion()
-        self.paths = pathh
-        self.animation = animation.FuncAnimation(self.fig, self.animate_func,
-                                                 init_func=self.init_func,
-                                                 frames=int(self.T + 1) * 10,
-                                                 interval=8,
-                                                 blit=True,
-                                                 repeat=False)
+        # self.animation.save('anim.gif', writer='imagemagick',fps=35)
+    # def animate_once(self, pathh):
+    #     plt.ion()
+    #     self.paths = pathh
+    #     self.animation = animation.FuncAnimation(self.fig, self.animate_func,
+    #                                              init_func=self.init_func,
+    #                                              frames=int(self.T + 1) * 10,
+    #                                              interval=8,
+    #                                              blit=True,
+    #                                              repeat=False)
                                                  
                             
         
-        plt.pause(1)
-        self.patches = []
-        self.artists = []
-        self.agents = dict()
-        self.agent_names = dict()
-        self.paths = []
+    #     plt.pause(1)
+    #     self.patches = []
+    #     self.artists = []
+    #     self.agents = dict()
+    #     self.agent_names = dict()
+    #     self.paths = []
 
     def save(self, file_name, speed):
         self.animation.save(

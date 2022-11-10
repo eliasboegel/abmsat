@@ -2,7 +2,7 @@ import time as timer
 import math
 import heapq
 import random
-from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost, get_path
+from single_agent_planner import compute_heuristics, compute_heuristics_goals, a_star, get_location, get_sum_of_cost, get_path
 
 
 def detect_collision(path1, path2):
@@ -124,7 +124,7 @@ def disjoint_splitting(collision):
 class CBSCLSolver(object):
     """The high-level search of CBS, cycle limited."""
 
-    def __init__(self, my_map, starts, goals):
+    def __init__(self, my_map, starts, goals, heuristics_func=None):
         """my_map   - list of lists specifying obstacle positions
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
@@ -204,12 +204,16 @@ class CBSCLSolver(object):
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
         limit = 3*math.factorial(self.num_of_agents+1)
+        time_lim = 0.5
         # While open nodes still exist
         while self.open_list and len(self.open_list)<limit:
-            if len(self.open_list)%200==0:
-                print('open list length:', len(self.open_list))
-            if (len(self.open_list)+1) == limit:
-                raise BaseException('No solutions')
+            open_list_length = len(self.open_list)
+            # if len(self.open_list)%200==0:
+            #     print('open list length:', len(self.open_list))
+            if (open_list_length+1) == limit:
+                raise BaseException('open list diverged...')
+            if timer.time() - self.start_time > time_lim:
+                raise BaseException('CBSCL out of time...')
             # print(len(self.open_list))
             
             # Retrieve open node and remove it from list

@@ -5,12 +5,12 @@ Code in this file is just provided as guidance, you are free to deviate from it.
 """
 
 from tracemalloc import start
-from single_agent_planner import compute_heuristics, a_star
+from single_agent_planner import compute_heuristics, a_star, compute_heuristics_potential_field, compute_heuristics_goals
 
 class AgentDistributed(object):
     """Agent object to be used in the distributed planner."""
 
-    def __init__(self, my_map, start, goal, agent_id):
+    def __init__(self, my_map, start, goal, agent_id, wall_cost, h_func, goals):
         """
         my_map   - list of lists specifying obstacle positions
         starts      - (x1, y1) start location
@@ -22,7 +22,12 @@ class AgentDistributed(object):
         self.start = start
         self.goal = goal
         self.id = agent_id
-        self.heuristics = compute_heuristics(self.my_map, self.goal)
+        if h_func == 'old':
+            self.heuristics = compute_heuristics(self.my_map, self.goal)
+        elif h_func == 'goals':
+            self.heuristics = compute_heuristics_goals(self.my_map, self.goal, goals)
+        elif h_func == 'potential':
+            self.heuristics = compute_heuristics_potential_field(self.my_map, self.goal, wall_cost)
 
         self.pos = self.start
         self.path = [self.start]

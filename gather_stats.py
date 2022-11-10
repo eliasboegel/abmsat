@@ -16,7 +16,7 @@ from independent import IndependentSolver
 from prioritized import PrioritizedPlanningSolver
 from distributed import DistributedPlanningSolver # Placeholder for Distributed Planning
 from visualize import Animation
-from single_agent_planner import get_trip_length, get_trip_duration, a_star, compute_heuristics, compute_heuristics_goals, compute_heuristics_potential_field
+from single_agent_planner import get_trip_length, get_trip_duration, a_star, compute_heuristics, compute_heuristics_goals
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -119,74 +119,82 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs various MAPF algorithms')
     parser.add_argument('--instance', type=str, default=None,
                         help='The name of the instance file(s)')
-    parser.add_argument('--batch', action='store_true', default=False,
-                        help='Use batch output instead of animation')
-    parser.add_argument('--disjoint', action='store_true', default=False,
-                        help='Use the disjoint splitting')
     parser.add_argument('--hvals', type=str, default=None,
                         help='The name of the heuristic map')
-    parser.add_argument('--solver', type=str, default=SOLVER,
-                        help='The solver to use (one of: {CBS,CBSCL,Independent,Prioritized}), defaults to ' + str(SOLVER))
 
     args = parser.parse_args()
 
-    t = 0
-    exp_samples = 1
-    exp_sample_list = []
-    last_exp_id = ''
-    experiments_dict = {}
 
-    print(f'\n******Running {args.solver} solver******\n')
-    if args.batch:
-        result_file = open(f"stats/{args.solver}_results.csv", "w")
-        result_file.write(f"map_id,trip durations,trip lengths,runtime[s],duration/len(a*)\n")
+    # all_solvers = ['CBS', 'CBSCL', 'Prioritized', 'Distributed']
+    all_solvers = ['Distributed']
+    heuristics_list = ['old', 'goals']
+    # heuristics = heuristics_list[0]
 
-    for file in sorted(glob.glob(args.instance)):
-        # print(file, '\n\n\n')
-        t+=1
-        tong = timeit.default_timer()
-        # displaying progress
-        if t%30 == 0:
-            print(f"Time passed: {round(tong - toc,5)} seconds")
+    for heuristics in heuristics_list:
+        for solver_string in all_solvers:
+            t = 0
+            exp_samples = 1
 
-        my_map, starts, goals = import_mapf_instance(file)
+            exp_sample_list = []
+            last_exp_id = ''
+            experiments_dict = {}
 
-        # print("***Import an instance***")
-        if args.solver == "CBS":
-            solver = CBSSolver(my_map, starts, goals)
-        elif args.solver == "CBSCL":
-            solver = CBSCLSolver(my_map, starts, goals)
-        elif args.solver == "Independent":
-            solver = IndependentSolver(my_map, starts, goals)
-        elif args.solver == "Prioritized":
-            solver = PrioritizedPlanningSolver(my_map, starts, goals)
-        elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-            solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
-        else: 
-            raise RuntimeError("Unknown solver!")
+            print(f'\n******Running {solver_string} solver with {heuristics} heuristics******\n')
 
-        if args.batch:
-            durations_normalized = 0
+            result_file = open(f"stats/{solver_string}_results.csv", "w")
+            result_file.write(f"map_id,trip durations,trip lengths,runtime[s],duration/len(a*)\n")
 
-            #spliting the file string to obtain the map id
-            map_id = file.split('\\')[-1].replace('.','_').split('_')[0:3]
-            existing_keys = experiments_dict.keys()
-            experiment_id = args.solver + '_' + map_id[0] + '_' + map_id[1]
-            # print(experiment_id)
-            if experiment_id == last_exp_id:
-                exp_samples += 1
-            else:
-                exp_sample_list.append(exp_samples)
-                exp_samples = 1
-            last_exp_id = experiment_id
-            # lazy error handling try/except statements :(
-            try:
+            for file in sorted(glob.glob(args.instance)):
+                # print(file, '\n\n\n')
+                t+=1
+                tong = timeit.default_timer()
+                # displaying progress
+                if t%30 == 0:
+                    print(f"Time passed: {round(tong - toc,5)} seconds")
+
+                my_map, starts, goals = import_mapf_instance(file)
+
+                h_vals = []
+                if heuristics == 'old':
+                    for goal in goals:
+                        h_vals.append(compute_heuristics(my_map, goal))
+                elif heuristics == 'goals':
+                    for goal in goals:
+                        h_vals.append(compute_heuristics_goals(my_map, goal, goals))
+
+                # print("***Import an instance***")
+                if solver_string == "CBS":
+                    solver = CBSSolver(my_map, starts, goals)
+                elif solver_string == "CBSCL":
+                    solver = CBSCLSolver(my_map, starts, goals)
+                elif solver_string == "Prioritized":
+                    solver = PrioritizedPlanningSolver(my_map, starts, goals)
+                elif solver_string == "Distributed":  # Wrapper of distributed planning solver class
+                    solver = DistributedPlanningSolver(my_map, starts, goals, heuristics) #!!!TODO: add your own distributed planning implementation here.
+                else: 
+                    raise RuntimeError("Unknown solver!")
+
+                durations_normalized = 0
+
+                #spliting the file string to obtain the map id
+                map_id = file.split('\\')[-1].replace('.','_').split('_')[0:3]
+                existing_keys = experiments_dict.keys()
+                experiment_id = solver_string + '_' + map_id[0] + '_' + map_id[1]
+                # print(experiment_id)
+                if experiment_id == last_exp_id:
+                    exp_samples += 1
+                else:
+                    exp_sample_list.append(exp_samples)
+                    exp_samples = 1
+                last_exp_id = experiment_id
+                # lazy error handling try/except statements :(
+                # try:
                 solve_start = timeit.default_timer()
                 paths = solver.find_solution()
                 solve_end = timeit.default_timer()
 
                 # Calculating standard deviation in arrival times
-                if "Distributed" in args.solver:
+                if "Distributed" in solver_string:
                     heuristics = []
                     for goal in goals:
                         heuristics.append(compute_heuristics(my_map, goal))
@@ -195,6 +203,7 @@ if __name__ == '__main__':
 
                 a_star_lengths = np.zeros(len(paths))
                 path_durations = np.zeros(len(paths))
+
                 for i in range(len(paths)):
                     a_star_lengths[i] = get_trip_length(a_star(my_map, starts[i], goals[i], heuristics[i], i, []))
                 
@@ -209,7 +218,6 @@ if __name__ == '__main__':
                 solver_time = round(solve_end - solve_start, 8)
                 trip_duration = get_trip_duration(paths)
                 trip_length = get_trip_length(paths)
-
                 
                 if experiment_id not in existing_keys:
                     experiments_dict[experiment_id] = [[trip_duration] , [trip_length], [solver_time], durations_normalized]
@@ -218,66 +226,43 @@ if __name__ == '__main__':
                     experiments_dict[experiment_id][1] += [trip_length]
                     experiments_dict[experiment_id][2] += [solver_time]
                     experiments_dict[experiment_id][3] += durations_normalized
-
+                durations_normalized_entry = str(durations_normalized).replace('[','').replace(']','').replace(',','-')
                 result_file.write(f"{file},{trip_duration},{trip_length},{solver_time},{durations_normalized}\n")
-            except:
-                result_file.write(f"{file},{999999},{999999},{999999},{999999}\n")
-            # print(f'durations normalized: {durations_normalized}')
-                 
-        elif not args.batch:
-            solve_start = timeit.default_timer()
-            paths = solver.find_solution()
-            solve_end = timeit.default_timer()
 
-            solver_time = round(solve_end - solve_start, 8)
-            trip_duration = get_trip_duration(paths)
-            trip_length = get_trip_length(paths)
-
-            print(f'Solver returned solution: {paths}\nTotal trip duration for all agents: {trip_duration}\nTotal trip length for all agents: {trip_length}\nSolver time: {solver_time}\n')
-            
-            print_mapf_instance(my_map, starts, goals)
-
-            print("***Test paths on a simulation***")
-            animation = Animation(my_map, starts, goals, paths)
-            # animation.animate_continuously()
-            # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
-            animation.show()
+                animation = Animation(my_map, starts, goals, paths)
+                animation.show()
+                # except:
+                #     result_file.write(f"{file},{999999},{999999},{999999},{999999}\n")
+                # print(f'durations normalized: {durations_normalized}')
 
 
-    tic = timeit.default_timer()
-    total_time = round(tic - toc,8)
-    print(f'\n\n******Finished all experiments!!****** \nTotal Time elapsed: {total_time} seconds')
-    # print(f'loop ran {t} times')
-    if args.batch:
-        result_file.close()
+            tic = timeit.default_timer()
+            total_time = round(tic - toc,8)
+            print(f'\n\n******Finished all experiments!!****** \nTotal Time elapsed: {total_time} seconds')
+            # print(f'loop ran {t} times')
 
+            # recording all the statistics for each experiment
+            stats_file = open(f"stats/{solver_string}_stats.csv", "w")
+            stats_file.write(f"map_id,avg trip duration,avg trip length,successful samples,total samples,runtime [s],sttdev arrival times\n")
+            all_keys = list(experiments_dict.keys())
+            for key in all_keys:
 
-        # recording all the statistics for each experiment
-        stats_file = open(f"stats/{args.solver}_stats.csv", "w")
-        stats_file.write(f"map_id,avg trip duration,avg trip length,successful samples,total samples,runtime [s],sttdev arrival times\n")
-        all_keys = list(experiments_dict.keys())
-        for key in all_keys:
+                # key = all_keys[i]
+                samples_taken = exp_sample_list[-1]
 
-            # key = all_keys[i]
-            samples_taken = exp_sample_list[-1]
+                trip_durations = experiments_dict[key][0]
+                trip_lengths = experiments_dict[key][1]
+                solver_times = experiments_dict[key][2]
+                durations_normalized = experiments_dict[key][3]
+                # print(durations_normalized)
 
-            trip_durations = experiments_dict[key][0]
-            trip_lengths = experiments_dict[key][1]
-            solver_times = experiments_dict[key][2]
-            durations_normalized = experiments_dict[key][3]
-            # print(durations_normalized)
+                avg_durations = sum(trip_durations)/len(trip_durations)
+                avg_lengths = sum(trip_lengths)/len(trip_lengths)
+                successful_samples = len(trip_durations)
+                avg_solver_times = sum(solver_times)/len(solver_times)
+                sttd_durations = np.std(np.array(durations_normalized))
+                
+                stats_file.write(f"{key},{avg_durations},{avg_lengths},{successful_samples},{samples_taken},{avg_solver_times},{sttd_durations}\n")
 
-            avg_durations = sum(trip_durations)/len(trip_durations)
-            avg_lengths = sum(trip_lengths)/len(trip_lengths)
-            successful_samples = len(trip_durations)
-            avg_solver_times = sum(solver_times)/len(solver_times)
-            sttd_durations = np.std(np.array(durations_normalized))
-            
-            stats_file.write(f"{key},{avg_durations},{avg_lengths},{successful_samples},{samples_taken},{avg_solver_times},{sttd_durations}\n")
-
-            # plt.hist(durations_normalized, 100, density=True, facecolor='g', alpha=0.75)
-            # plt.show()
-    
-
-
-
+                # plt.hist(durations_normalized, 100, density=True, facecolor='g', alpha=0.75)
+                # plt.show()

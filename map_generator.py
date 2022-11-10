@@ -51,18 +51,19 @@ class CreateMaps(object):
             output_map.close()
 
 
-use_map = "map3"
+use_maps = ["map1","map2","map3"]
 
-skeletons = {
-    "map1": "instances/map1_skeleton.txt",
-    "map2": "instances/map2_skeleton.txt",
-    "map3": "instances/map3_skeleton.txt"
-}
-file_name = "instances/" + use_map + "/" + use_map + "_"
-skeleton_file = open(skeletons[use_map], 'r').read()
+for use_map in use_maps:
+    skeletons = {
+        "map1": "instances/map1_skeleton.txt",
+        "map2": "instances/map2_skeleton.txt",
+        "map3": "instances/map3_skeleton.txt"
+    }
+    file_name = "instances/experiment2/" + use_map + "_"
+    skeleton_file = open(skeletons[use_map], 'r').read()
 
-print('Creating maps...')
-toc = timeit.default_timer()
-CreateMaps(file_name=file_name, agent_counts=[6, 10, 14, 18], input_string=skeleton_file, sample_count=75)
-tic = timeit.default_timer()
-print(f'Finished creating all files in {round(tic-toc,5)} seconds')
+    print(f'\nCreating {use_map}\'s...')
+    toc = timeit.default_timer()
+    CreateMaps(file_name=file_name, agent_counts=[2, 4, 6, 8, 10, 14, 18], input_string=skeleton_file, sample_count=275)
+    tic = timeit.default_timer()
+    print(f'Finished creating all files in {round(tic-toc,5)} seconds')

@@ -1,5 +1,5 @@
 import heapq
-from operator import truth
+import numpy as np
 
 def move(loc, dir):
     directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
@@ -11,6 +11,17 @@ def get_sum_of_cost(paths):
     for path in paths:
         rst += len(path) - 1
     return rst
+
+def get_trip_duration(paths):
+    durations = 0
+    for path in paths:
+        goal = path[-1]
+        index = -1
+        while goal == path[index]:
+            index -= 1
+        duration = len(path) + index + 1
+        durations += duration
+    return durations
 
 def get_trip_length(paths):
     length = 0
@@ -53,8 +64,65 @@ def compute_heuristics(my_map, goal):
     h_values = dict()
     for loc, node in closed_list.items():
         h_values[loc] = node['cost']
+        # print(f'loc: {loc}')
     return h_values
 
+
+def compute_heuristics_goals(my_map, goal, goals):
+    # Use Dijkstra to build a shortest-path tree rooted at the goal location
+    open_list = []
+    closed_list = dict()
+    root = {'loc': goal, 'cost': 0}
+    heapq.heappush(open_list, (root['cost'], goal, root))
+    closed_list[goal] = root
+    while len(open_list) > 0:
+        (cost, loc, curr) = heapq.heappop(open_list)
+        for dir in range(4):
+            child_loc = move(loc, dir)
+            child_cost = cost + 1
+            if child_loc[0] < 0 or child_loc[0] >= len(my_map) \
+               or child_loc[1] < 0 or child_loc[1] >= len(my_map[0]):
+               continue
+            if my_map[child_loc[0]][child_loc[1]]:
+                continue
+            child = {'loc': child_loc, 'cost': child_cost}
+            if child_loc in closed_list:
+                existing_node = closed_list[child_loc]
+                if existing_node['cost'] > child_cost:
+                    closed_list[child_loc] = child
+                    # open_list.delete((existing_node['cost'], existing_node['loc'], existing_node))
+                    heapq.heappush(open_list, (child_cost, child_loc, child))
+            else:
+                closed_list[child_loc] = child
+                heapq.heappush(open_list, (child_cost, child_loc, child))
+
+    # build the heuristics table
+    h_values = dict()
+    for loc, node in closed_list.items():
+        additional_cost = 0
+        if loc in goals:
+            additional_cost = 20
+        h_values[loc] = node['cost'] + additional_cost
+        # print(f'loc: {loc}')
+    return h_values
+
+
+def compute_heuristics_potential_field(my_map, goal, wall_costs):
+        
+    nx = len(my_map)
+    ny = len(my_map[0])
+    goal_cost = np.zeros((nx, ny))
+
+    h_values = dict()
+
+    # computing cost for each cell on map 
+    for i in range(len(my_map)):
+        for j in range(len(my_map[0])):
+            if my_map[i][j] == False:
+                # considering the map as a potential field as a function of euclidean distance from walls, and manhattan distance from goal
+                goal_cost[i][j] += np.exp(0.1*(abs(i-goal[0])+abs(j-goal[1])))
+                h_values[(i,j)] = wall_costs[i][j] + goal_cost[i][j]
+    return h_values
 
 
 def get_location(path, time):
