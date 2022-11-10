@@ -59,7 +59,7 @@ class DistributedPlanningSolver(object):
 
     def update_others(self, invoker_newplan, init_constraints, ignored_ids, invoker_id, reverse=False):
         """Updates the paths of all agents except the ones in ignored_ids"""
-        print(f'update others invoked by: {invoker_id}')
+        # print(f'update others invoked by: {invoker_id}')
         # Generate list of visible agents
         visible_agents = []
         for combo in self.radar_combos:
@@ -82,7 +82,7 @@ class DistributedPlanningSolver(object):
             new_ignores = [visible_agent] + ignored_ids
             # new_ignores = [visible_agent]
             # new_ignores = []
-            print(f'\nignored_ids from invoker: {ignored_ids}\ninvoker newplan (agent{invoker_id}): {invoker_newplan}\nvisible agent (agent{visible_agent}) planned path: {self.agents[visible_agent].planned_path}')
+            # print(f'\nignored_ids from invoker: {ignored_ids}\ninvoker newplan (agent{invoker_id}): {invoker_newplan}\nvisible agent (agent{visible_agent}) planned path: {self.agents[visible_agent].planned_path}')
             collision = self.check_collision(invoker_id, visible_agent)
             if collision:
                 # collision_constraints = constraints + constrain_path([collision, loser_newplan[0]], visible_agent, self.t, dt=0)
@@ -92,7 +92,7 @@ class DistributedPlanningSolver(object):
                 #                                         {'agent': visible_agent,
                 #                                         'loc': [invoker_newplan[0], invoker_newplan[0]],
                 #                                         'timestep': self.t}]
-                print(f'collision between {invoker_id} and {visible_agent} at {collision}')
+                # print(f'collision between {invoker_id} and {visible_agent} at {collision}')
                 if collision == invoker_newplan[0]:
                     collision_constraints = constraints + [{'agent': visible_agent,
                                                         'loc': [invoker_newplan[0]],
@@ -189,7 +189,7 @@ class DistributedPlanningSolver(object):
         self.t = 0
         while not all_finished:
             all_positions = []
-            print(f'\n*****now calculating for time: {self.t}*****')
+            # print(f'\n*****now calculating for time: {self.t}*****')
             for agent in self.agents:
                 all_positions.append(agent.position_at(self.t))
 
@@ -215,15 +215,15 @@ class DistributedPlanningSolver(object):
 
                 # Handle collision
                 if self.check_collision(i, j):
-                    print(f'\n\nagents {i} (1{a1_pos1}, 2{a1_pos2}) & {j} (1{a2_pos1}, 2{a2_pos2}) have a collision!')#\nVertex? {vertex_collided}\nedge? {edge_collided}')
+                    # print(f'\n\nagents {i} (1{a1_pos1}, 2{a1_pos2}) & {j} (1{a2_pos1}, 2{a2_pos2}) have a collision!')#\nVertex? {vertex_collided}\nedge? {edge_collided}')
                     # Momentum handling
                     if self.agents[i].momentum != self.agents[j].momentum: 
-                        print("Unequal momentum!")
+                        # print("Unequal momentum!")
                         higher_momentum = self.agents[i].momentum > self.agents[j].momentum
                         self.resolve_conflict(i, j, higher_momentum)
                     # If both agents have same momentum
                     else:                        
-                        print('Equal momentum')
+                        # print('Equal momentum')
                         # Random loser if both agents have same momentum
                         select_random = random.randrange(0, 2) # Random int, either 0 or 1
                         self.resolve_conflict(i, j, select_random)
@@ -238,7 +238,7 @@ class DistributedPlanningSolver(object):
             elif self.t > 9*22: all_finished = True
             
             self.t = self.t + 1
-            print(f'\n\n\n*****     *****moving to time: {self.t}*****     *****')
+            # print(f'\n\n\n*****     *****moving to time: {self.t}*****     *****')
             self.collision_constraints = []
 
             # animation_paths = []

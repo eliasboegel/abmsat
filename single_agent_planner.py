@@ -100,7 +100,7 @@ def compute_heuristics_goals(my_map, goal, goals):
     h_values = dict()
     for loc, node in closed_list.items():
         additional_cost = 0
-        if loc in goals:
+        if loc in goals and loc != goal:
             additional_cost = 20
         h_values[loc] = node['cost'] + additional_cost
         # print(f'loc: {loc}')

@@ -64,6 +64,6 @@ for use_map in use_maps:
 
     print(f'\nCreating {use_map}\'s...')
     toc = timeit.default_timer()
-    CreateMaps(file_name=file_name, agent_counts=[2, 4, 6, 8, 10, 14, 18], input_string=skeleton_file, sample_count=275)
+    CreateMaps(file_name=file_name, agent_counts=[2, 4, 6, 8, 10], input_string=skeleton_file, sample_count=50)
     tic = timeit.default_timer()
     print(f'Finished creating all files in {round(tic-toc,5)} seconds')

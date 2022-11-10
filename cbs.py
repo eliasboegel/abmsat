@@ -144,8 +144,15 @@ class CBSSolver(object):
 
         # compute heuristics for the low-level search
         self.heuristics = []
-        for goal in self.goals:
-            self.heuristics.append(compute_heuristics(my_map, goal))
+        # print(f'heuristics_func is {heuristics_func}')
+        if heuristics_func is None:
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics(my_map, goal))
+        else:
+            self.heuristics = heuristics_func
+        # elif heuristics_func == 'goals':
+        #     for goal in self.goals:
+        #         self.heuristics.append(compute_heuristics_goals(my_map, goal, 'manhattan'))
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))

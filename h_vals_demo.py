@@ -97,7 +97,6 @@ for i in range(len(my_map)):
     for j in range(len(my_map[0])):
         if my_map[i][j] == False:
             key = (i,j)
-            print(f'key: {key}')
             h_cost[i][j] = h_vals[key]
             h_cost_own[i][j] = h_vals_own[key]
             h_cost_goals[i][j] = h_vals_goals[key]

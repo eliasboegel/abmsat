@@ -19,12 +19,16 @@ class PrioritizedPlanningSolver(object):
         self.CPU_time = 0
 
         # compute heuristics for the low-level search
+        self.heuristics = []
+        # print(f'heuristics_func is {heuristics_func}')
         if heuristics_func == None:
-            self.heuristics = []
             for goal in self.goals:
                 self.heuristics.append(compute_heuristics(my_map, goal))
         else:
             self.heuristics = heuristics_func
+        # elif heuristics_func == 'goals':
+        #     for goal in self.goals:
+        #         self.heuristics.append(compute_heuristics_goals(my_map, goal))
 
     def find_solution(self):
         """ Finds paths for all agents from their start locations to their goal locations."""
