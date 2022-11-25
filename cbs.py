@@ -213,7 +213,7 @@ class CBSSolver(object):
 
         # While open nodes still exist
         limit = 3*math.factorial(self.num_of_agents+1)
-        time_lim = 0.5
+        time_lim = 10
         # While open nodes still exist
         while self.open_list and len(self.open_list)<limit:
             open_list_length = len(self.open_list)

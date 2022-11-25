@@ -146,22 +146,32 @@ if __name__ == '__main__':
         t+=1
         tong = timeit.default_timer()
         # displaying progress
-        if t%30 == 0:
-            print(f"Time passed: {round(tong - toc,5)} seconds")
+        # if t%30 == 0:
+        print(f"Time passed: {round(tong - toc,5)} seconds")
 
         my_map, starts, goals = import_mapf_instance(file)
 
+        heuristics_name = args.hvals
+
+        h_vals = []
+        if heuristics_name == 'old':
+            for goal in goals:
+                h_vals.append(compute_heuristics(my_map, goal))
+        elif heuristics_name == 'goals':
+            for goal in goals:
+                h_vals.append(compute_heuristics_goals(my_map, goal, goals))
+
         # print("***Import an instance***")
         if args.solver == "CBS":
-            solver = CBSSolver(my_map, starts, goals)
+            solver = CBSSolver(my_map, starts, goals, h_vals)
         elif args.solver == "CBSCL":
-            solver = CBSCLSolver(my_map, starts, goals)
+            solver = CBSCLSolver(my_map, starts, goals, h_vals)
         elif args.solver == "Independent":
-            solver = IndependentSolver(my_map, starts, goals)
+            solver = IndependentSolver(my_map, starts, goals, h_vals)
         elif args.solver == "Prioritized":
-            solver = PrioritizedPlanningSolver(my_map, starts, goals)
+            solver = PrioritizedPlanningSolver(my_map, starts, goals, h_vals)
         elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-            solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
+            solver = DistributedPlanningSolver(my_map, starts, goals, args.hvals) #!!!TODO: add your own distributed planning implementation here.
         else: 
             raise RuntimeError("Unknown solver!")
 

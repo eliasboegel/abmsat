@@ -12,7 +12,7 @@ from run_experiments import import_mapf_instance, print_mapf_instance
 from single_agent_planner import compute_heuristics, compute_heuristics_goals, compute_heuristics_potential_field
 
 
-def plot2D(x, y, p, title):
+def plot2D(x, y, p, title=None):
   fig = pyplot.figure(figsize=(11, 7), dpi=100)
   fig.suptitle(title, fontsize=20)
   ax = fig.gca(projection='3d')
@@ -106,8 +106,8 @@ for i in range(len(my_map)):
 #         if my_map[i][j] == False:
 #           goal_cost[i][j] += np.exp(0.15*(abs(i-goal[0])+abs(j-goal[1])))
 
-plot2D(x, y, np.transpose(h_cost), 'Old heursitics value map')
+plot2D(x, y, np.transpose(h_cost))
 # print(h_cost[:])
-plot2D(x, y, np.transpose(h_cost_own), 'New heursitics value map')
-plot2D(x, y, np.transpose(h_cost_goals), 'Heursitics value map with goals')
+# plot2D(x, y, np.transpose(h_cost_own), 'New heursitics value map')
+plot2D(x, y, np.transpose(h_cost_goals))
 pyplot.show()

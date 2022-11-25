@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 from single_agent_planner import get_sum_of_cost, constrain_path
 import numpy as np
 
-np.random.seed(1)
 # ISSUES THAT NEED TO BE FIXED
 # 1) Vertex/edge collisions with agents outside of the current combination are not checked properly.
 #    This causes problems when resolve_conflict is called and a vertex/edge conflict occurs directly for the first move
@@ -76,23 +75,13 @@ class DistributedPlanningSolver(object):
             # Make constraints valid for current agent
             constraints = init_constraints
             for i in range(len(constraints)):
-                constraints[i]['agent'] = visible_agent
-            
+                constraints[i]['agent'] = visible_agent            
 
             new_ignores = [visible_agent] + ignored_ids
-            # new_ignores = [visible_agent]
-            # new_ignores = []
             # print(f'\nignored_ids from invoker: {ignored_ids}\ninvoker newplan (agent{invoker_id}): {invoker_newplan}\nvisible agent (agent{visible_agent}) planned path: {self.agents[visible_agent].planned_path}')
             collision = self.check_collision(invoker_id, visible_agent)
             if collision:
-                # collision_constraints = constraints + constrain_path([collision, loser_newplan[0]], visible_agent, self.t, dt=0)
-                # collision_constraints = constraints + [{'agent': visible_agent,
-                #                                         'loc': [collision, collision],
-                #                                         'timestep': self.t},
-                #                                         {'agent': visible_agent,
-                #                                         'loc': [invoker_newplan[0], invoker_newplan[0]],
-                #                                         'timestep': self.t}]
-                # print(f'collision between {invoker_id} and {visible_agent} at {collision}')
+                
                 if collision == invoker_newplan[0]:
                     collision_constraints = constraints + [{'agent': visible_agent,
                                                         'loc': [invoker_newplan[0]],
@@ -106,24 +95,24 @@ class DistributedPlanningSolver(object):
 
 
     def resolve_conflict(self, a1_id, a2_id, selector, reverse=False, used_map=None):
-        """Resolves a conflict between two agents by selecting a winner and a loser"""
-        used_map = self.my_map if used_map is None else used_map
+            """Resolves a conflict between two agents by selecting a winner and a loser"""
+            used_map = self.my_map if used_map is None else used_map
 
-        winner_id = a1_id if selector else a2_id
-        loser_id = a2_id if selector else a1_id
+            winner_id = a1_id if selector else a2_id
+            loser_id = a2_id if selector else a1_id
 
-        loser_constraint = [{'agent': loser_id,
-                            'loc': [self.agents[winner_id].path[-1],self.agents[winner_id].position_at(self.t+1)],
-                            'timestep': self.t}]
-        self.agents[loser_id].curr_constraints = self.agents[loser_id].curr_constraints + loser_constraint
-        
-        # ISSUE IS HERE
-        # EVEN THO WE CALL UPDATE, THE PLAN PATH OVERWRITES ANY PREVIOUS UPDATE IN THE SAME TIMESTEP
-        
-        loser_newplan = self.agents[loser_id].plan_path(self.agents[loser_id].curr_constraints, self.t, self.agents[loser_id].start if reverse else self.agents[loser_id].goal, used_map=used_map)
+            loser_constraint = [{'agent': loser_id,
+                                'loc': [self.agents[winner_id].path[-1],self.agents[winner_id].position_at(self.t+1)],
+                                'timestep': self.t}]
+            self.agents[loser_id].curr_constraints = self.agents[loser_id].curr_constraints + loser_constraint
+            
+            # ISSUE IS HERE
+            # EVEN THO WE CALL UPDATE, THE PLAN PATH OVERWRITES ANY PREVIOUS UPDATE IN THE SAME TIMESTEP
+            
+            loser_newplan = self.agents[loser_id].plan_path(self.agents[loser_id].curr_constraints, self.t, self.agents[loser_id].start if reverse else self.agents[loser_id].goal, used_map=used_map)
 
-        # Loser is given constraints and has to replan path
-        self.update_others(loser_newplan, loser_constraint, [winner_id], loser_id, reverse)
+            # Loser is given constraints and has to replan path
+            self.update_others(loser_newplan, loser_constraint, [winner_id], loser_id, reverse)
 
     def check_collision(self, agent1_id, agent2_id):
         # Checks two agents for collisions
@@ -143,6 +132,26 @@ class DistributedPlanningSolver(object):
         return a1_pos2 if collided else None
 
     
+    def check_collision2(self, agent1_id, agent2_id):
+        # Checks two agents for collisions
+        # Returns None if there is no collision
+        # Returns the collision position if there is a collision
+
+        a1_pos1 = self.agents[agent1_id].path[-1]
+        a2_pos1 = self.agents[agent2_id].path[-1]
+        # print(f'invoker is at {a1_pos1} and visible agent is at {a2_pos1}')
+        a1_pos2 = self.agents[agent1_id].position_at(self.t+1)
+        a2_pos2 = self.agents[agent2_id].position_at(self.t+1)
+
+        vertex_collided = 1 if a1_pos2 == a2_pos2 else 0
+        edge_collided = 1 if a1_pos1 == a2_pos2 and a2_pos1 == a1_pos2 else 0
+        collided = vertex_collided or edge_collided
+
+        if collided:
+            return a1_pos2, a2_pos1
+        else:
+            return 0, 0
+
     def find_wall_costs(self, cell, my_map):
         cost = 0
         x, y = cell[0], cell[1]
@@ -182,6 +191,7 @@ class DistributedPlanningSolver(object):
         self.agents = []
         for i in range(self.num_of_agents):
             newAgent = AgentDistributed(self.my_map, self.starts[i], self.goals[i], i, wall_cost, self.heuristic_func, goals)
+            # print(newAgent.planned_path)
             self.agents.append(newAgent)
 
         
@@ -241,9 +251,6 @@ class DistributedPlanningSolver(object):
             # print(f'\n\n\n*****     *****moving to time: {self.t}*****     *****')
             self.collision_constraints = []
 
-            # animation_paths = []
-            # for i in range(len(self.agents)):
-            #     animation_paths.append(self.agents[i].get_last_two_moves(self.t))
             
         for agent in self.agents:
             result.append(agent.path)

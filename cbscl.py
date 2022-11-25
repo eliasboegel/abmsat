@@ -211,7 +211,7 @@ class CBSCLSolver(object):
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
         limit = 3*math.factorial(self.num_of_agents+1)
-        time_lim = 0.5
+        time_lim = 20
         # While open nodes still exist
         while self.open_list and len(self.open_list)<limit:
             open_list_length = len(self.open_list)

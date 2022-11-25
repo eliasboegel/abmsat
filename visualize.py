@@ -6,6 +6,7 @@ import numpy as np
 from matplotlib import animation
 
 Colors = ['forestgreen', 'blue', 'orange', 'dodgerblue', 'purple', 'blueviolet', 'salmon', 'goldenrod', 'black', 'orangered']
+Colors = ['C0', 'C1', 'C2', 'C3', 'C4', (18/255, 57/255, 186/255), (199/255, 0, 21/255), (217/255, 229/255, 0), (10/255, 10/255, 10/255)]
 
 # Colors = ['green', 'blue', 'orange', 'dodgerblue', 'purple', 'pink', 'brown', 'yellow', 'black']
 
@@ -74,7 +75,7 @@ class Animation:
             y = [len(my_map)-1-x[0] for x in paths[i]]
             x = [x[1] for x in paths[i]]
 
-            plt.plot(x,y, linewidth=11.5, alpha=0.1, color=Colors[i % len(Colors)])
+            plt.plot(x,y, linewidth=11.5, alpha=0.13, color='red')
 
     # def animate_continuously(self):
         self.animation = animation.FuncAnimation(self.fig, self.animate_func,
