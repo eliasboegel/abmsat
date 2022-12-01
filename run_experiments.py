@@ -153,23 +153,26 @@ if __name__ == '__main__':
 
         heuristics_name = args.hvals
 
-        h_vals = []
-        if heuristics_name == 'old':
-            for goal in goals:
-                h_vals.append(compute_heuristics(my_map, goal))
-        elif heuristics_name == 'goals':
-            for goal in goals:
-                h_vals.append(compute_heuristics_goals(my_map, goal, goals))
+        # h_vals = []
+        # if heuristics_name == 'old':
+        #     for goal in goals:
+        #         h_vals.append(compute_heuristics(my_map, goal))
+        # elif heuristics_name == 'goals':
+        #     for goal in goals:
+        #         h_vals.append(compute_heuristics_goals(my_map, goal, goals))
+        # else:
+        #     for goal in goals:
+        #         h_vals.append(compute_heuristics(my_map, goal))
 
         # print("***Import an instance***")
         if args.solver == "CBS":
-            solver = CBSSolver(my_map, starts, goals, h_vals)
+            solver = CBSSolver(my_map, starts, goals, args.hvals)
         elif args.solver == "CBSCL":
-            solver = CBSCLSolver(my_map, starts, goals, h_vals)
+            solver = CBSCLSolver(my_map, starts, goals, args.hvals)
         elif args.solver == "Independent":
-            solver = IndependentSolver(my_map, starts, goals, h_vals)
+            solver = IndependentSolver(my_map, starts, goals, args.hvals)
         elif args.solver == "Prioritized":
-            solver = PrioritizedPlanningSolver(my_map, starts, goals, h_vals)
+            solver = PrioritizedPlanningSolver(my_map, starts, goals, args.hvals)
         elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
             solver = DistributedPlanningSolver(my_map, starts, goals, args.hvals) #!!!TODO: add your own distributed planning implementation here.
         else: 

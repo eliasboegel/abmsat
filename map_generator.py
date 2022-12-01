@@ -9,7 +9,15 @@ class CreateMaps(object):
         for agent_num in agent_counts:
             self.file_addition_storage = []
             for sample_num in range(sample_count):
-                self.create_map(agent_num, sample_num)
+                # if 99 >= sample_num:
+                #     self.file_name = file_name[0]
+                # elif 199 >= sample_num >= 99:
+                #     self.file_name = file_name[1]
+                # elif 299 >= sample_num >= 199:
+                #     self.file_name = file_name[2]
+                # elif 399 >= sample_num >= 299:
+                #     self.file_name = file_name[3]
+                self.create_map(agent_num, sample_num+1500)
 
     def initialize_all_combos(self):
         """Initializes all possible start and goal locations for a given map """
@@ -59,11 +67,12 @@ for use_map in use_maps:
         "map2": "instances/map2_skeleton.txt",
         "map3": "instances/map3_skeleton.txt"
     }
-    file_name = "instances/experiment2/" + use_map + "_"
+    file_name = "instances/experiment2_dis2/" + use_map + "_"
     skeleton_file = open(skeletons[use_map], 'r').read()
-
-    print(f'\nCreating {use_map}\'s...')
+    # for prio and dis [2, 4, 6, 8, 10, 14, 18]
+    # for cbs and cbscl [2, 4, 6, 8, 10, 12]
+    print(f'\nCreating {use_map}\'s for {file_name}...')
     toc = timeit.default_timer()
-    CreateMaps(file_name=file_name, agent_counts=[2, 4, 6, 8, 10], input_string=skeleton_file, sample_count=50)
+    CreateMaps(file_name=file_name, agent_counts=[2, 4, 6, 8, 10, 14, 18], input_string=skeleton_file, sample_count=400)
     tic = timeit.default_timer()
     print(f'Finished creating all files in {round(tic-toc,5)} seconds')

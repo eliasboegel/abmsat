@@ -12,7 +12,6 @@ Colors = ['C0', 'C1', 'C2', 'C3', 'C4', (18/255, 57/255, 186/255), (199/255, 0, 
 
 class Animation:
     def __init__(self, my_map, starts, goals, paths):
-        
 
         self.my_map = np.flip(np.transpose(my_map), 1)
         self.starts = []

@@ -142,17 +142,18 @@ class CBSSolver(object):
 
         self.open_list = []
 
-        # compute heuristics for the low-level search
+        # compute heuristics
         self.heuristics = []
-        # print(f'heuristics_func is {heuristics_func}')
-        if heuristics_func is None:
+        if heuristics_func == 'old':
             for goal in self.goals:
                 self.heuristics.append(compute_heuristics(my_map, goal))
+        elif heuristics_func == 'goals':
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics_goals(my_map, goal, goals))
         else:
-            self.heuristics = heuristics_func
-        # elif heuristics_func == 'goals':
-        #     for goal in self.goals:
-        #         self.heuristics.append(compute_heuristics_goals(my_map, goal, 'manhattan'))
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics(my_map, goal))
+
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
@@ -212,8 +213,8 @@ class CBSSolver(object):
         #           Ensure to create a copy of any objects that your child nodes might inherit
 
         # While open nodes still exist
-        limit = 3*math.factorial(self.num_of_agents+1)
-        time_lim = 10
+        limit = 4*math.factorial(self.num_of_agents+1)
+        time_lim = 9999
         # While open nodes still exist
         while self.open_list and len(self.open_list)<limit:
             open_list_length = len(self.open_list)
@@ -222,7 +223,7 @@ class CBSSolver(object):
             if (open_list_length+1) == limit:
                 raise BaseException('open list diverged...')
             if timer.time() - self.start_time > time_lim:
-                raise BaseException('CBSCL out of time...')
+                raise BaseException('CBS ran out of time...')
             
             # Retrieve open node and remove it from list
             p = self.pop_node()
@@ -258,7 +259,7 @@ class CBSSolver(object):
                 #print(f"New constraint: {new_constraint}")
                 #print(f"before: {q['paths'][agent]}")
                 # Generate new path using the new additional constraints (i.e. avoiding the collision)
-                path = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
+                path = a_star(self.my_map, self.starts[agent ], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
                 #print(f"after: {path}")
                 # If a path was found, push the new node with updated path back to the open list
                 

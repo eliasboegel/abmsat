@@ -1,7 +1,6 @@
 """
-Main file to run experiments and show animation.
+Python script to run monte carlo simulations and save all the generated data into /stats/.
 
-Note: To make the animation work in Spyder you should set graphics backend to 'Automatic' (Preferences > Graphics > Graphics Backend).
 """
 
 #!/usr/bin/python
@@ -155,21 +154,21 @@ if __name__ == '__main__':
 
                 my_map, starts, goals = import_mapf_instance(file)
 
-                h_vals = []
-                if heuristics_name == 'old':
-                    for goal in goals:
-                        h_vals.append(compute_heuristics(my_map, goal))
-                elif heuristics_name == 'goals':
-                    for goal in goals:
-                        h_vals.append(compute_heuristics_goals(my_map, goal, goals))
+                # h_vals = []
+                # if heuristics_name == 'old':
+                #     for goal in goals:
+                #         h_vals.append(compute_heuristics(my_map, goal))
+                # elif heuristics_name == 'goals':
+                #     for goal in goals:
+                #         h_vals.append(compute_heuristics_goals(my_map, goal, goals))
 
                 # print("***Import an instance***")
                 if solver_string == "CBS":
-                    solver = CBSSolver(my_map, starts, goals, h_vals)
+                    solver = CBSSolver(my_map, starts, goals, heuristics_name)
                 elif solver_string == "CBSCL":
-                    solver = CBSCLSolver(my_map, starts, goals, h_vals)
+                    solver = CBSCLSolver(my_map, starts, goals, heuristics_name)
                 elif solver_string == "Prioritized":
-                    solver = PrioritizedPlanningSolver(my_map, starts, goals, h_vals)
+                    solver = PrioritizedPlanningSolver(my_map, starts, goals, heuristics_name)
                 elif solver_string == "Distributed":  # Wrapper of distributed planning solver class
                     solver = DistributedPlanningSolver(my_map, starts, goals, heuristics_name) #!!!TODO: add your own distributed planning implementation here.
                 else: 

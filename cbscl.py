@@ -3,7 +3,7 @@ import math
 import heapq
 import random
 from single_agent_planner import compute_heuristics, compute_heuristics_goals, a_star, get_location, get_sum_of_cost, get_path
-
+import matplotlib.pyplot as plt
 
 def detect_collision(path1, path2):
     ##############################
@@ -141,17 +141,19 @@ class CBSCLSolver(object):
 
         self.open_list = []
 
-        # compute heuristics for the low-level search
+        # compute heuristics
         self.heuristics = []
-        # print(f'heuristics_func is {heuristics_func}')
-        if heuristics_func is None:
+        if heuristics_func == 'old':
             for goal in self.goals:
                 self.heuristics.append(compute_heuristics(my_map, goal))
+        elif heuristics_func == 'goals':
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics_goals(my_map, goal, goals))
         else:
-            self.heuristics = heuristics_func
-        # if heuristics_func == 'goals':
-        #     for goal in self.goals:
-        #         self.heuristics.append(compute_heuristics_goals(my_map, goal))
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics(my_map, goal))
+
+
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
@@ -195,34 +197,24 @@ class CBSCLSolver(object):
         root['collisions'] = detect_collisions(root['paths'][-1])
         self.push_node(root)
 
-        # Task 3.1: Testing
-        # print(f"Collisions: {root['collisions']}")
-
-        # Task 3.2: Testing
-        #for collision in root['collisions']:
-        # print(f"Constraints: {standard_splitting(collision)}")
+        open_history = []
+        time_history = []
         
-        ##############################
-        # Task 3.3: High-Level Search
-        #           Repeat the following as long as the open list is not empty:
-        #             1. Get the next node from the open list (you can use self.pop_node()
-        #             2. If this node has no collision, return solution
-        #             3. Otherwise, choose the first collision and convert to a list of constraints (using your
-        #                standard_splitting function). Add a new child node to your open list for each constraint
-        #           Ensure to create a copy of any objects that your child nodes might inherit
-        limit = 3*math.factorial(self.num_of_agents+1)
-        time_lim = 20
+
+        limit = 4*math.factorial(self.num_of_agents+1)
+        time_lim = 9999
         # While open nodes still exist
         while self.open_list and len(self.open_list)<limit:
+
+
             open_list_length = len(self.open_list)
-            # if len(self.open_list)%200==0:
-            #     print('open list length:', len(self.open_list))
+            if open_list_length%200==0:
+                print('open list length:', len(self.open_list))
             if (open_list_length+1) == limit:
                 raise BaseException('open list diverged...')
             if timer.time() - self.start_time > time_lim:
-                raise BaseException('CBSCL out of time...')
-            # print(len(self.open_list))
-            
+                raise BaseException('CBSCL ran out of time...')
+                
             # Retrieve open node and remove it from list
             p = self.pop_node()
             #print(f"Original paths: {p['paths']}")
@@ -234,7 +226,13 @@ class CBSCLSolver(object):
             #print(f"last collision: {p['collisions']}")
 
             # Return current paths if no collisions were detected between them
-            if not p['collisions']: return p['paths'][-1]
+            if not p['collisions']: 
+                # plt.plot(time_history, open_history, label='open list length')
+                # plt.xlabel('time (s)')
+                # plt.ylabel('open list length')
+                # plt.grid()
+                # plt.show()
+                return p['paths'][-1]
 
             # Select one arbitrary (in this case first) collision from all detected collisions
             collision = p['collisions'][0]
@@ -248,6 +246,12 @@ class CBSCLSolver(object):
             # Iterate through all constraints generated
             #agent_selector = random.randrange(0, 2)
             for new_constraint in constraints: #[constraints[agent_selector]]:
+
+                open_list_length = len(self.open_list)
+
+                open_history.append(open_list_length)
+                time_history.append(timer.time() - self.start_time)
+            
                 # Create new blank node with the newly generated constraints and previous paths
                 q = {
                     'constraints': p['constraints'].copy() + [new_constraint]
