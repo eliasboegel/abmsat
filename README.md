@@ -1,4 +1,4 @@
-# abmsat
+# ABMSAT
 Course practical for AE4422-20 Agent-based Modelling and Simulation for Air Transportation.
 
 This git repo contains implementations of several path planners that are used to solver an arbitrary multiagent path finding problem. The solutions include:
