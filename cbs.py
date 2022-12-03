@@ -1,8 +1,9 @@
+import math
 import time as timer
 import heapq
 import random
 import copy
-from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost, get_path
+from single_agent_planner import compute_heuristics, compute_heuristics_goals, a_star, get_location, get_sum_of_cost, get_path
 
 
 def detect_collision(path1, path2):
@@ -124,7 +125,7 @@ def disjoint_splitting(collision):
 class CBSSolver(object):
     """The high-level search of CBS."""
 
-    def __init__(self, my_map, starts, goals):
+    def __init__(self, my_map, starts, goals, heuristics_func=None):
         """my_map   - list of lists specifying obstacle positions
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
@@ -141,10 +142,18 @@ class CBSSolver(object):
 
         self.open_list = []
 
-        # compute heuristics for the low-level search
+        # compute heuristics
         self.heuristics = []
-        for goal in self.goals:
-            self.heuristics.append(compute_heuristics(my_map, goal))
+        if heuristics_func == 'old':
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics(my_map, goal))
+        elif heuristics_func == 'goals':
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics_goals(my_map, goal, goals))
+        else:
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics(my_map, goal))
+
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
@@ -157,7 +166,7 @@ class CBSSolver(object):
         self.num_of_expanded += 1
         return node
 
-    def find_solution(self, disjoint=True):
+    def find_solution(self, disjoint=False):
         """ Finds paths for all agents from their start locations to their goal locations
 
         disjoint    - use disjoint splitting or not
@@ -204,12 +213,20 @@ class CBSSolver(object):
         #           Ensure to create a copy of any objects that your child nodes might inherit
 
         # While open nodes still exist
-        while self.open_list:
-            print(len(self.open_list))
+        limit = 4*math.factorial(self.num_of_agents+1)
+        time_lim = 9999
+        # While open nodes still exist
+        while self.open_list and len(self.open_list)<limit:
+            open_list_length = len(self.open_list)
+            # if open_list_length%200==0:
+                # print('open list length:', open_list_length)
+            if (open_list_length+1) == limit:
+                raise BaseException('open list diverged...')
+            if timer.time() - self.start_time > time_lim:
+                raise BaseException('CBS ran out of time...')
             
             # Retrieve open node and remove it from list
             p = self.pop_node()
-            #print(f"Original paths: {p['paths']}")
 
             # Detect collisions between all agents
             p['collisions'] = detect_collisions(p['paths'])
@@ -242,7 +259,7 @@ class CBSSolver(object):
                 #print(f"New constraint: {new_constraint}")
                 #print(f"before: {q['paths'][agent]}")
                 # Generate new path using the new additional constraints (i.e. avoiding the collision)
-                path = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
+                path = a_star(self.my_map, self.starts[agent ], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
                 #print(f"after: {path}")
                 # If a path was found, push the new node with updated path back to the open list
                 
@@ -252,8 +269,8 @@ class CBSSolver(object):
                     q['cost'] = get_sum_of_cost(q['paths'])
                     self.push_node(q)
                     #print(f"q path: {q['paths']}")
-                else:
-                    print("Solution not found")
+                # else:
+                #     print("Solution not found")
             #print( '------------------------------')
 
 

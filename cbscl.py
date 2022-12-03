@@ -1,8 +1,9 @@
 import time as timer
+import math
 import heapq
 import random
-from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost, get_path
-
+from single_agent_planner import compute_heuristics, compute_heuristics_goals, a_star, get_location, get_sum_of_cost, get_path
+import matplotlib.pyplot as plt
 
 def detect_collision(path1, path2):
     ##############################
@@ -123,7 +124,7 @@ def disjoint_splitting(collision):
 class CBSCLSolver(object):
     """The high-level search of CBS, cycle limited."""
 
-    def __init__(self, my_map, starts, goals):
+    def __init__(self, my_map, starts, goals, heuristics_func=None):
         """my_map   - list of lists specifying obstacle positions
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
@@ -140,10 +141,19 @@ class CBSCLSolver(object):
 
         self.open_list = []
 
-        # compute heuristics for the low-level search
+        # compute heuristics
         self.heuristics = []
-        for goal in self.goals:
-            self.heuristics.append(compute_heuristics(my_map, goal))
+        if heuristics_func == 'old':
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics(my_map, goal))
+        elif heuristics_func == 'goals':
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics_goals(my_map, goal, goals))
+        else:
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics(my_map, goal))
+
+
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
@@ -156,7 +166,7 @@ class CBSCLSolver(object):
         self.num_of_expanded += 1
         return node
 
-    def find_solution(self, disjoint=True):
+    def find_solution(self, disjoint=False, limited_cycle_length=1):
         """ Finds paths for all agents from their start locations to their goal locations
 
         disjoint    - use disjoint splitting or not
@@ -171,8 +181,9 @@ class CBSCLSolver(object):
         # collisions     - list of collisions in paths
         root = {'cost': 0,
                 'constraints': [],
-                'paths': [],
-                'collisions': []}
+                'paths': [[]],
+                'collisions': [],
+                'history': []}
 
         # Find initial path for each agent
         for i in range(self.num_of_agents):
@@ -180,44 +191,48 @@ class CBSCLSolver(object):
                           i, root['constraints'])
             if path is None:
                 raise BaseException('No solutions')
-            root['paths'].append(path)
+            root['paths'][0].append(path)
 
-        root['cost'] = get_sum_of_cost(root['paths'])
-        root['collisions'] = detect_collisions(root['paths'])
+        root['cost'] = get_sum_of_cost(root['paths'][-1])
+        root['collisions'] = detect_collisions(root['paths'][-1])
         self.push_node(root)
 
-        # Task 3.1: Testing
-        # print(f"Collisions: {root['collisions']}")
+        open_history = []
+        time_history = []
+        
 
-        # Task 3.2: Testing
-        #for collision in root['collisions']:
-        # print(f"Constraints: {standard_splitting(collision)}")
-            
-        ##############################
-        # Task 3.3: High-Level Search
-        #           Repeat the following as long as the open list is not empty:
-        #             1. Get the next node from the open list (you can use self.pop_node()
-        #             2. If this node has no collision, return solution
-        #             3. Otherwise, choose the first collision and convert to a list of constraints (using your
-        #                standard_splitting function). Add a new child node to your open list for each constraint
-        #           Ensure to create a copy of any objects that your child nodes might inherit
-
+        limit = 4*math.factorial(self.num_of_agents+1)
+        time_lim = 9999
         # While open nodes still exist
-        while self.open_list:
-            print(len(self.open_list))
-            
+        while self.open_list and len(self.open_list)<limit:
+
+
+            open_list_length = len(self.open_list)
+            if open_list_length%200==0:
+                print('open list length:', len(self.open_list))
+            if (open_list_length+1) == limit:
+                raise BaseException('open list diverged...')
+            if timer.time() - self.start_time > time_lim:
+                raise BaseException('CBSCL ran out of time...')
+                
             # Retrieve open node and remove it from list
             p = self.pop_node()
             #print(f"Original paths: {p['paths']}")
 
             # Detect collisions between all agents
-            p['collisions'] = detect_collisions(p['paths'])
+            p['collisions'] = detect_collisions(p['paths'][-1])
             #print(f"pre-replan path: {p['paths']}")
             #print(f"#collisions: { len(p['collisions'])}")
             #print(f"last collision: {p['collisions']}")
 
             # Return current paths if no collisions were detected between them
-            if not p['collisions']: return p['paths']
+            if not p['collisions']: 
+                # plt.plot(time_history, open_history, label='open list length')
+                # plt.xlabel('time (s)')
+                # plt.ylabel('open list length')
+                # plt.grid()
+                # plt.show()
+                return p['paths'][-1]
 
             # Select one arbitrary (in this case first) collision from all detected collisions
             collision = p['collisions'][0]
@@ -225,15 +240,24 @@ class CBSCLSolver(object):
             # Generate constraints for the two involved agents based on the selected collisions
             constraints = disjoint_splitting(collision) if disjoint else standard_splitting(collision)
             #print(f"new constraints: {constraints}")
-            
+
+
+
             # Iterate through all constraints generated
             #agent_selector = random.randrange(0, 2)
             for new_constraint in constraints: #[constraints[agent_selector]]:
+
+                open_list_length = len(self.open_list)
+
+                open_history.append(open_list_length)
+                time_history.append(timer.time() - self.start_time)
+            
                 # Create new blank node with the newly generated constraints and previous paths
                 q = {
-                    'constraints': p['constraints'].copy() + [new_constraint],
-                    'paths': p['paths'].copy()
+                    'constraints': p['constraints'].copy() + [new_constraint]
                 }
+
+                
 
                 # Retrieve index of agent for which the current constraint was generated
                 agent = new_constraint['agent']
@@ -241,25 +265,50 @@ class CBSCLSolver(object):
                 #print(f"New constraint: {new_constraint}")
                 #print(f"before: {q['paths'][agent]}")
                 # Generate new path using the new additional constraints (i.e. avoiding the collision)
-                path = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
+                new_path = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent], agent, q['constraints'])
                 #print(f"after: {path}")
                 # If a path was found, push the new node with updated path back to the open list
-                
-                if path is not None:
-                    q['paths'][agent] = path.copy()
-                    q['collisions'] = detect_collisions(q['paths'])
-                    q['cost'] = get_sum_of_cost(q['paths'])
-                    self.push_node(q)
-                    #print(f"q path: {q['paths']}")
-                else:
-                    print("Solution not found")
+
+                # Second part of conditional limits 1-timestep cycles
+                if (new_path is not None):
+
+                    # Cycle limiting
+                    min_repeats_to_assume_cycle = 1 # Number of repeating sequences needed before node is deemed cycling indefinitely, lower numbers limit more agressively, but also more incorrectly
+                    cycle_detected = False
+                    test_paths = p['paths'].copy()
+                    test_paths.append(p['paths'][-1].copy())
+                    test_paths[-1][agent] = new_path.copy()
+                    for cycle_length in range(1, len(test_paths) // (min_repeats_to_assume_cycle+1)): # Max cycle length is the maximum length that can fit at least twice into the path history
+                        all_same = True
+                        for i in range(min_repeats_to_assume_cycle):
+                            last_n_history = test_paths[-cycle_length:] # Path history for all agents for last n nodes of the parent nodes, where n = cycle length
+                            n_history_before_last = test_paths[-(min_repeats_to_assume_cycle+1)*cycle_length:-min_repeats_to_assume_cycle*cycle_length] # Path history for all agents for set of n parent nodes before the last n parent nodes
+                            
+                            if last_n_history != n_history_before_last:
+                                all_same = False
+
+                        if all_same:
+                            cycle_detected = True
+                            # print(f"Cycle of length {cycle_length} detected, closing node!")
+                            break
+
+                    if not cycle_detected:
+                        q['paths'] = test_paths
+                        q['history'] = p['history'].copy() + [new_path.copy()]
+                        q['collisions'] = detect_collisions(q['paths'][-1])
+                        q['cost'] = get_sum_of_cost(q['paths'][-1])
+                        #print(f"Same path as previous node: {p['paths'][agent] == q['paths'][agent]}\n")
+                        self.push_node(q)
+                        #print(f"q path: {q['paths']}")
+                #else:
+                    #print("Solution not found")
             #print( '------------------------------')
 
 
     def print_results(self, node):
-        print("\n Found a solution! \n")
+        # print("\n Found a solution! \n")
         CPU_time = timer.time() - self.start_time
-        print("CPU time (s):    {:.2f}".format(CPU_time))
-        print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
-        print("Expanded nodes:  {}".format(self.num_of_expanded))
-        print("Generated nodes: {}".format(self.num_of_generated))
+        # print("CPU time (s):    {:.2f}".format(CPU_time))
+        # print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
+        # print("Expanded nodes:  {}".format(self.num_of_expanded))
+        # print("Generated nodes: {}".format(self.num_of_generated))
