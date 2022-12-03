@@ -5,11 +5,14 @@ from matplotlib.patches import Circle, Rectangle
 import numpy as np
 from matplotlib import animation
 
-Colors = ['green', 'blue', 'orange']
+Colors = ['forestgreen', 'blue', 'orange', 'dodgerblue', 'purple', 'blueviolet', 'salmon', 'goldenrod', 'black', 'orangered']
+Colors = ['C0', 'C1', 'C2', 'C3', 'C4', (18/255, 57/255, 186/255), (199/255, 0, 21/255), (217/255, 229/255, 0), (10/255, 10/255, 10/255)]
 
+# Colors = ['green', 'blue', 'orange', 'dodgerblue', 'purple', 'pink', 'brown', 'yellow', 'black']
 
 class Animation:
     def __init__(self, my_map, starts, goals, paths):
+
         self.my_map = np.flip(np.transpose(my_map), 1)
         self.starts = []
         for start in starts:
@@ -26,10 +29,9 @@ class Animation:
 
         aspect = len(self.my_map) / len(self.my_map[0])
 
-        self.fig = plt.figure(frameon=False, figsize=(4 * aspect, 4))
+        self.fig = plt.figure(num=1,frameon=False, figsize=(4 * aspect, 4))
         self.ax = self.fig.add_subplot(111, aspect='equal')
         self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=None, hspace=None)
-        # self.ax.set_frame_on(False)
 
         self.patches = []
         self.artists = []
@@ -58,28 +60,30 @@ class Animation:
                                           edgecolor='black', alpha=0.5))
         for i in range(len(self.paths)):
             name = str(i)
-            self.agents[i] = Circle((starts[i][0], starts[i][1]), 0.3, facecolor=Colors[i % len(Colors)],
-                                    edgecolor='black')
+            self.agents[i] = Circle((starts[i][0], starts[i][1]), 0.3, facecolor=Colors[i % len(Colors)])
             self.agents[i].original_face_color = Colors[i % len(Colors)]
             self.patches.append(self.agents[i])
             self.T = max(self.T, len(paths[i]) - 1)
-            self.agent_names[i] = self.ax.text(starts[i][0], starts[i][1] + 0.25, name)
+            self.agent_names[i] = self.ax.text(starts[i][0], starts[i][1]-2, name, verticalalignment='center', color='white', fontsize=13)
             self.agent_names[i].set_horizontalalignment('center')
             self.agent_names[i].set_verticalalignment('center')
             self.artists.append(self.agent_names[i])
 
+
+            y = [len(my_map)-1-x[0] for x in paths[i]]
+            x = [x[1] for x in paths[i]]
+
+            plt.plot(x,y, linewidth=11.5, alpha=0.13, color='red')
+
         self.animation = animation.FuncAnimation(self.fig, self.animate_func,
                                                  init_func=self.init_func,
-                                                 frames=int(self.T + 1) * 10,
-                                                 interval=12,
+                                                 frames=int(self.T + 5) * 10,
+                                                 interval=18,
                                                  blit=True)
-
+        
+   
     def save(self, file_name, speed):
-        self.animation.save(
-            file_name,
-            fps=10 * speed,
-            dpi=200,
-            savefig_kwargs={"pad_inches": 0, "bbox_inches": "tight"})
+        self.animation.save('anim.gif', writer='imagemagick',fps=35)
 
     @staticmethod
     def show():
@@ -96,7 +100,7 @@ class Animation:
         for k in range(len(self.paths)):
             pos = self.get_state(t / 10, self.paths[k])
             self.agents[k].center = (pos[0], pos[1])
-            self.agent_names[k].set_position((pos[0], pos[1] + 0.5))
+            self.agent_names[k].set_position((pos[0], pos[1]))
 
         # reset all colors
         for _, agent in self.agents.items():

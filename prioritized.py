@@ -1,11 +1,11 @@
 import time as timer
-from single_agent_planner import compute_heuristics, a_star, get_sum_of_cost
+from single_agent_planner import compute_heuristics, compute_heuristics_goals, a_star, get_sum_of_cost, get_location, constrain_path
 
 
 class PrioritizedPlanningSolver(object):
     """A planner that plans for each robot sequentially."""
 
-    def __init__(self, my_map, starts, goals):
+    def __init__(self, my_map, starts, goals, heuristics_func=None):
         """my_map   - list of lists specifying obstacle positions
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
@@ -18,10 +18,18 @@ class PrioritizedPlanningSolver(object):
 
         self.CPU_time = 0
 
-        # compute heuristics for the low-level search
+        # compute heuristics
         self.heuristics = []
-        for goal in self.goals:
-            self.heuristics.append(compute_heuristics(my_map, goal))
+        if heuristics_func == 'old':
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics(my_map, goal))
+        elif heuristics_func == 'goals':
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics_goals(my_map, goal, goals))
+        else:
+            for goal in self.goals:
+                self.heuristics.append(compute_heuristics(my_map, goal))
+
 
     def find_solution(self):
         """ Finds paths for all agents from their start locations to their goal locations."""
@@ -30,27 +38,28 @@ class PrioritizedPlanningSolver(object):
         result = []
         constraints = []
 
-        for i in range(self.num_of_agents):  # Find path for each agent
+        # Find path for each agent
+        for i in range(self.num_of_agents):  
+            
+            # Running a* for each agent
             path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
                           i, constraints)
             if path is None:
                 raise BaseException('No solutions')
             result.append(path)
+            constraint = [] 
+            
+            print(f'agent {i} has path: {path}')
+            for k in range(i+1, self.num_of_agents):
+                constraint = constraint + (constrain_path(path, k))
+
+            constraints = constraints + constraint
 
             ##############################
-            # Task 2: Add constraints here
-            #         Useful variables:
-            #            * path contains the solution path of the current (i'th) agent, e.g., [(1,1),(1,2),(1,3)]
-            #            * self.num_of_agents has the number of total agents
-            #            * constraints: array of constraints to consider for future A* searches
-
-
-            ##############################
-
+        print(f'this is result {result}')
         self.CPU_time = timer.time() - start_time
-
-        print("\n Found a solution! \n")
-        print("CPU time (s):    {:.2f}".format(self.CPU_time))
-        print("Sum of costs:    {}".format(get_sum_of_cost(result)))
-        print(result)
+        
+        print("\nFound a solution!\n")
+        # print("CPU time (s):    {:.10f}".format(self.CPU_time))
+        # print("Sum of costs:    {}".format(get_sum_of_cost(result)))
         return result
