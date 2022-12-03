@@ -1,10 +1,3 @@
-# import os
-
-# for filename in os.listdir(f'{os.getcwd()}/test/'):
-#     with open(os.path.join(f'{os.getcwd()}/test/', filename), 'r') as f: # open in readonly mode
-#         print(f.read())
-#       # do your stuff
-
 import numpy as np
 from matplotlib import pyplot, cm
 from mpl_toolkits.mplot3d import Axes3D
@@ -101,13 +94,6 @@ for i in range(len(my_map)):
             h_cost_own[i][j] = h_vals_own[key]
             h_cost_goals[i][j] = h_vals_goals[key]
           
-# for i in range(len(my_map)):
-#     for j in range(len(my_map[0])):
-#         if my_map[i][j] == False:
-#           goal_cost[i][j] += np.exp(0.15*(abs(i-goal[0])+abs(j-goal[1])))
-
 plot2D(x, y, np.transpose(h_cost))
-# print(h_cost[:])
-# plot2D(x, y, np.transpose(h_cost_own), 'New heursitics value map')
 plot2D(x, y, np.transpose(h_cost_goals))
 pyplot.show()

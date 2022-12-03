@@ -88,7 +88,7 @@ def import_mapf_instance(filename):
     rows, columns = [int(x) for x in line.split(' ')]
     rows = int(rows)
     columns = int(columns)
-    # #rows lines with the map
+    
     my_map = []
     for r in range(rows):
         line = f.readline()
@@ -98,10 +98,10 @@ def import_mapf_instance(filename):
                 my_map[-1].append(True)
             elif cell == '.':
                 my_map[-1].append(False)
-    # #agents
+                
     line = f.readline()
     num_agents = int(line)
-    # #agents lines with the start/goal positions
+    
     starts = []
     goals = []
     for a in range(num_agents):
@@ -141,30 +141,18 @@ if __name__ == '__main__':
         result_file = open(f"stats/{args.solver}_results.csv", "w")
         result_file.write(f"map_id,trip durations,trip lengths,runtime[s],duration/len(a*)\n")
 
+    # Running the selected solver on the selected instance file
     for file in sorted(glob.glob(args.instance)):
-        # print(file, '\n\n\n')
+        print(file, '\n\n\n')
         t+=1
         tong = timeit.default_timer()
-        # displaying progress
-        # if t%30 == 0:
         print(f"Time passed: {round(tong - toc,5)} seconds")
 
         my_map, starts, goals = import_mapf_instance(file)
 
         heuristics_name = args.hvals
 
-        # h_vals = []
-        # if heuristics_name == 'old':
-        #     for goal in goals:
-        #         h_vals.append(compute_heuristics(my_map, goal))
-        # elif heuristics_name == 'goals':
-        #     for goal in goals:
-        #         h_vals.append(compute_heuristics_goals(my_map, goal, goals))
-        # else:
-        #     for goal in goals:
-        #         h_vals.append(compute_heuristics(my_map, goal))
 
-        # print("***Import an instance***")
         if args.solver == "CBS":
             solver = CBSSolver(my_map, starts, goals, args.hvals)
         elif args.solver == "CBSCL":
@@ -173,8 +161,8 @@ if __name__ == '__main__':
             solver = IndependentSolver(my_map, starts, goals, args.hvals)
         elif args.solver == "Prioritized":
             solver = PrioritizedPlanningSolver(my_map, starts, goals, args.hvals)
-        elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-            solver = DistributedPlanningSolver(my_map, starts, goals, args.hvals) #!!!TODO: add your own distributed planning implementation here.
+        elif args.solver == "Distributed":  
+            solver = DistributedPlanningSolver(my_map, starts, goals, args.hvals) 
         else: 
             raise RuntimeError("Unknown solver!")
 
@@ -185,14 +173,14 @@ if __name__ == '__main__':
             map_id = file.split('\\')[-1].replace('.','_').split('_')[0:3]
             existing_keys = experiments_dict.keys()
             experiment_id = args.solver + '_' + map_id[0] + '_' + map_id[1]
-            # print(experiment_id)
+            
             if experiment_id == last_exp_id:
                 exp_samples += 1
             else:
                 exp_sample_list.append(exp_samples)
                 exp_samples = 1
             last_exp_id = experiment_id
-            # lazy error handling try/except statements :(
+            
             try:
                 solve_start = timeit.default_timer()
                 paths = solver.find_solution()
@@ -211,8 +199,7 @@ if __name__ == '__main__':
                 for i in range(len(paths)):
                     a_star_lengths[i] = get_trip_length(a_star(my_map, starts[i], goals[i], heuristics[i], i, []))
                 
-                # a_star_lengths = np.ones(len(paths))*np.mean(a_star_lengths)
-
+                
                 for i in range(len(paths)):
                     path = paths[i]
                     path_durations[i] = get_trip_duration([path])
@@ -235,9 +222,11 @@ if __name__ == '__main__':
                 result_file.write(f"{file},{trip_duration},{trip_length},{solver_time},{durations_normalized}\n")
             except:
                 result_file.write(f"{file},{999999},{999999},{999999},{999999}\n")
-            # print(f'durations normalized: {durations_normalized}')
-                 
+                
         elif not args.batch:
+            
+            print_mapf_instance(my_map, starts, goals)
+
             solve_start = timeit.default_timer()
             paths = solver.find_solution()
             solve_end = timeit.default_timer()
@@ -248,19 +237,16 @@ if __name__ == '__main__':
 
             print(f'Solver returned solution: {paths}\nTotal trip duration for all agents: {trip_duration}\nTotal trip length for all agents: {trip_length}\nSolver time: {solver_time}\n')
             
-            print_mapf_instance(my_map, starts, goals)
-
             print("***Test paths on a simulation***")
             animation = Animation(my_map, starts, goals, paths)
-            # animation.animate_continuously()
-            # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
+            # animation.save("output.mp4", 1.0)
             animation.show()
 
 
     tic = timeit.default_timer()
     total_time = round(tic - toc,8)
     print(f'\n\n******Finished all experiments!!****** \nTotal Time elapsed: {total_time} seconds')
-    # print(f'loop ran {t} times')
+    
     if args.batch:
         result_file.close()
 
@@ -288,8 +274,6 @@ if __name__ == '__main__':
             
             stats_file.write(f"{key},{avg_durations},{avg_lengths},{successful_samples},{samples_taken},{avg_solver_times},{sttd_durations}\n")
 
-            # plt.hist(durations_normalized, 100, density=True, facecolor='g', alpha=0.75)
-            # plt.show()
     
 
 

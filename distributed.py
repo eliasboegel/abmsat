@@ -58,7 +58,7 @@ class DistributedPlanningSolver(object):
 
     def update_others(self, invoker_newplan, init_constraints, ignored_ids, invoker_id, reverse=False):
         """Updates the paths of all agents except the ones in ignored_ids"""
-        # print(f'update others invoked by: {invoker_id}')
+        
         # Generate list of visible agents
         visible_agents = []
         for combo in self.radar_combos:
@@ -69,7 +69,7 @@ class DistributedPlanningSolver(object):
         
         # Update other agents in descending momentum priority order
         sorted_visible_agents = sorted(visible_agents, key=lambda agent_id: self.agents[agent_id].momentum, reverse=True)
-        # print(f'visible agents: {sorted_visible_agents}')
+        
         for visible_agent in sorted_visible_agents:
 
             # Make constraints valid for current agent
@@ -78,7 +78,6 @@ class DistributedPlanningSolver(object):
                 constraints[i]['agent'] = visible_agent            
 
             new_ignores = [visible_agent] + ignored_ids
-            # print(f'\nignored_ids from invoker: {ignored_ids}\ninvoker newplan (agent{invoker_id}): {invoker_newplan}\nvisible agent (agent{visible_agent}) planned path: {self.agents[visible_agent].planned_path}')
             collision = self.check_collision(invoker_id, visible_agent)
             if collision:
                 
@@ -106,9 +105,6 @@ class DistributedPlanningSolver(object):
                                 'timestep': self.t}]
             self.agents[loser_id].curr_constraints = self.agents[loser_id].curr_constraints + loser_constraint
             
-            # ISSUE IS HERE
-            # EVEN THO WE CALL UPDATE, THE PLAN PATH OVERWRITES ANY PREVIOUS UPDATE IN THE SAME TIMESTEP
-            
             loser_newplan = self.agents[loser_id].plan_path(self.agents[loser_id].curr_constraints, self.t, self.agents[loser_id].start if reverse else self.agents[loser_id].goal, used_map=used_map)
 
             # Loser is given constraints and has to replan path
@@ -121,7 +117,7 @@ class DistributedPlanningSolver(object):
 
         a1_pos1 = self.agents[agent1_id].path[-1]
         a2_pos1 = self.agents[agent2_id].path[-1]
-        # print(f'invoker is at {a1_pos1} and visible agent is at {a2_pos1}')
+
         a1_pos2 = self.agents[agent1_id].position_at(self.t+1)
         a2_pos2 = self.agents[agent2_id].position_at(self.t+1)
 
@@ -131,26 +127,6 @@ class DistributedPlanningSolver(object):
 
         return a1_pos2 if collided else None
 
-    
-    def check_collision2(self, agent1_id, agent2_id):
-        # Checks two agents for collisions
-        # Returns None if there is no collision
-        # Returns the collision position if there is a collision
-
-        a1_pos1 = self.agents[agent1_id].path[-1]
-        a2_pos1 = self.agents[agent2_id].path[-1]
-        # print(f'invoker is at {a1_pos1} and visible agent is at {a2_pos1}')
-        a1_pos2 = self.agents[agent1_id].position_at(self.t+1)
-        a2_pos2 = self.agents[agent2_id].position_at(self.t+1)
-
-        vertex_collided = 1 if a1_pos2 == a2_pos2 else 0
-        edge_collided = 1 if a1_pos1 == a2_pos2 and a2_pos1 == a1_pos2 else 0
-        collided = vertex_collided or edge_collided
-
-        if collided:
-            return a1_pos2, a2_pos1
-        else:
-            return 0, 0
 
     def find_wall_costs(self, cell, my_map):
         cost = 0
@@ -191,7 +167,7 @@ class DistributedPlanningSolver(object):
         self.agents = []
         for i in range(self.num_of_agents):
             newAgent = AgentDistributed(self.my_map, self.starts[i], self.goals[i], i, wall_cost, self.heuristic_func, goals)
-            # print(newAgent.planned_path)
+            
             self.agents.append(newAgent)
 
         
@@ -256,10 +232,5 @@ class DistributedPlanningSolver(object):
             result.append(agent.path)
         
         # Print final output
-        # print("\n Found a solution! \n")
-        # print("CPU time (s):    {:.6f}".format(self.CPU_time))
-        # print(f"time.time diff: {round(time.time() - self.start_time, 6)}")
-        # print("Sum of costs:    {}".format(get_sum_of_cost(result)))  # Hint: think about how cost is defined in your implementation
-        # print(result)
-        
+        print("\n Found a solution! \n")
         return result

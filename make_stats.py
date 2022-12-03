@@ -154,15 +154,6 @@ if __name__ == '__main__':
 
                 my_map, starts, goals = import_mapf_instance(file)
 
-                # h_vals = []
-                # if heuristics_name == 'old':
-                #     for goal in goals:
-                #         h_vals.append(compute_heuristics(my_map, goal))
-                # elif heuristics_name == 'goals':
-                #     for goal in goals:
-                #         h_vals.append(compute_heuristics_goals(my_map, goal, goals))
-
-                # print("***Import an instance***")
                 if solver_string == "CBS":
                     solver = CBSSolver(my_map, starts, goals, heuristics_name)
                 elif solver_string == "CBSCL":
@@ -176,7 +167,7 @@ if __name__ == '__main__':
 
                 durations_normalized = 0
 
-                #spliting the file string to obtain the map id
+                # spliting the file string to obtain the map id
                 map_id = file.split('\\')[-1].replace('.','_').split('_')[0:3]
                 existing_keys = experiments_dict.keys()
                 experiment_id = solver_string + '_' + map_id[0] + '_' + map_id[1]
@@ -188,7 +179,8 @@ if __name__ == '__main__':
                     exp_samples = 1
 
                 last_exp_id = experiment_id
-                # lazy error handling try/except statements :(
+
+                # If any of the experiments throws an error, we count it as a failure
                 try:
                     solve_start = timeit.default_timer()
                     paths = solver.find_solution()
@@ -237,10 +229,9 @@ if __name__ == '__main__':
                     durations_normalized_entry = str(durations_normalized).replace('[','').replace(']','').replace(', ','-')
                     result_file.write(f"{file},{trip_duration},{trip_length},{solver_time},{durations_normalized_entry}\n")
 
-                    # animation = Animation(my_map, starts, goals, paths)
-                    # animation.show()
+
                 except:
-                    # print('error!!')
+                    # exception received! counting the experiment as a failure
                     result_file.write(f"{file},{999999},{999999},{999999},{999999}\n")
 
             tic = timeit.default_timer()
@@ -270,7 +261,6 @@ if __name__ == '__main__':
                 
                 stats_file.write(f"{key},{avg_durations},{avg_lengths},{successful_samples},{samples_taken},{avg_solver_times},{sttd_durations}\n")
 
-                # plt.hist(durations_normalized, 100, density=True, facecolor='g', alpha=0.75)
-                # plt.show()
+
     final_toc = timeit.default_timer()
     print(f'\n\n******Finished all experiments!!****** \nTime elapsed: {round(final_toc - toc,8)} seconds')

@@ -7,16 +7,7 @@ from single_agent_planner import compute_heuristics, compute_heuristics_goals, a
 
 
 def detect_collision(path1, path2):
-    ##############################
-    # Task 3.1: Return the first collision that occurs between two robot paths (or None if there is no collision)
-    #           There are two types of collisions: vertex collision and edge collision.
-    #           A vertex collision occurs if both robots occupy the same location at the same timestep
-    #           An edge collision occurs if the robots swap their location at the same timestep.
-    #           You should use "get_location(path, t)" to get the location of a robot at time t.
-    
     # Iterate over all times as long as at least one agent has not reached the goal yet
-    #print(len(path1))
-    #print(len(path2))
     for t in range(max(len(path1), len(path2))):
 
         # Extract positions of both agents
@@ -36,12 +27,6 @@ def detect_collision(path1, path2):
     return None
 
 def detect_collisions(paths):
-    ##############################
-    # Task 3.1: Return a list of first collisions between all robot pairs.
-    #           A collision can be represented as dictionary that contains the id of the two robots, the vertex or edge
-    #           causing the collision, and the timestep at which the collision occurred.
-    #           You should use your detect_collision function to find a collision between two robots.
-    
     # Initialize empty list to store collisions in
     collisions = []
 
@@ -61,14 +46,6 @@ def detect_collisions(paths):
     return collisions
 
 def standard_splitting(collision):
-    ##############################
-    # Task 3.2: Return a list of (two) constraints to resolve the given collision
-    #           Vertex collision: the first constraint prevents the first agent to be at the specified location at the
-    #                            specified timestep, and the second constraint prevents the second agent to be at the
-    #                            specified location at the specified timestep.
-    #           Edge collision: the first constraint prevents the first agent to traverse the specified edge at the
-    #                          specified timestep, and the second constraint prevents the second agent to traverse the
-    #                          specified edge at the specified timestep
     
     # Create constraint for agent1
     constraint1 = {'agent': collision['a1'], 'loc': collision['loc'], 'timestep': collision['timestep']}
@@ -81,16 +58,6 @@ def standard_splitting(collision):
 
 
 def disjoint_splitting(collision):
-    ##############################
-    # Task 4.1: Return a list of (two) constraints to resolve the given collision
-    #           Vertex collision: the first constraint enforces one agent to be at the specified location at the
-    #                            specified timestep, and the second constraint prevents the same agent to be at the
-    #                            same location at the timestep.
-    #           Edge collision: the first constraint enforces one agent to traverse the specified edge at the
-    #                          specified timestep, and the second constraint prevents the same agent to traverse the
-    #                          specified edge at the specified timestep
-    #           Choose the agent randomly
-    
     # Randomly select one agent as "agent1" and the other as "agent2"
     agent_selector = random.randrange(0, 2)
     agent1_local_id = agent_selector # Local id, i.e. first or second agent within this collision only
@@ -196,22 +163,7 @@ class CBSSolver(object):
         root['collisions'] = detect_collisions(root['paths'])
         self.push_node(root)
 
-        # Task 3.1: Testing
-        # print(f"Collisions: {root['collisions']}")
-
-        # Task 3.2: Testing
-        #for collision in root['collisions']:
-        # print(f"Constraints: {standard_splitting(collision)}")
-            
-        ##############################
-        # Task 3.3: High-Level Search
-        #           Repeat the following as long as the open list is not empty:
-        #             1. Get the next node from the open list (you can use self.pop_node()
-        #             2. If this node has no collision, return solution
-        #             3. Otherwise, choose the first collision and convert to a list of constraints (using your
-        #                standard_splitting function). Add a new child node to your open list for each constraint
-        #           Ensure to create a copy of any objects that your child nodes might inherit
-
+        
         # While open nodes still exist
         limit = 4*math.factorial(self.num_of_agents+1)
         time_lim = 9999

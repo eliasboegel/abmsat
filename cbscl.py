@@ -6,16 +6,7 @@ from single_agent_planner import compute_heuristics, compute_heuristics_goals, a
 import matplotlib.pyplot as plt
 
 def detect_collision(path1, path2):
-    ##############################
-    # Task 3.1: Return the first collision that occurs between two robot paths (or None if there is no collision)
-    #           There are two types of collisions: vertex collision and edge collision.
-    #           A vertex collision occurs if both robots occupy the same location at the same timestep
-    #           An edge collision occurs if the robots swap their location at the same timestep.
-    #           You should use "get_location(path, t)" to get the location of a robot at time t.
-    
     # Iterate over all times as long as at least one agent has not reached the goal yet
-    #print(len(path1))
-    #print(len(path2))
     for t in range(max(len(path1), len(path2))):
 
         # Extract positions of both agents
@@ -35,12 +26,6 @@ def detect_collision(path1, path2):
     return None
 
 def detect_collisions(paths):
-    ##############################
-    # Task 3.1: Return a list of first collisions between all robot pairs.
-    #           A collision can be represented as dictionary that contains the id of the two robots, the vertex or edge
-    #           causing the collision, and the timestep at which the collision occurred.
-    #           You should use your detect_collision function to find a collision between two robots.
-    
     # Initialize empty list to store collisions in
     collisions = []
 
@@ -60,15 +45,6 @@ def detect_collisions(paths):
     return collisions
 
 def standard_splitting(collision):
-    ##############################
-    # Task 3.2: Return a list of (two) constraints to resolve the given collision
-    #           Vertex collision: the first constraint prevents the first agent to be at the specified location at the
-    #                            specified timestep, and the second constraint prevents the second agent to be at the
-    #                            specified location at the specified timestep.
-    #           Edge collision: the first constraint prevents the first agent to traverse the specified edge at the
-    #                          specified timestep, and the second constraint prevents the second agent to traverse the
-    #                          specified edge at the specified timestep
-    
     # Create constraint for agent1
     constraint1 = {'agent': collision['a1'], 'loc': collision['loc'], 'timestep': collision['timestep']}
     
@@ -80,16 +56,6 @@ def standard_splitting(collision):
 
 
 def disjoint_splitting(collision):
-    ##############################
-    # Task 4.1: Return a list of (two) constraints to resolve the given collision
-    #           Vertex collision: the first constraint enforces one agent to be at the specified location at the
-    #                            specified timestep, and the second constraint prevents the same agent to be at the
-    #                            same location at the timestep.
-    #           Edge collision: the first constraint enforces one agent to traverse the specified edge at the
-    #                          specified timestep, and the second constraint prevents the same agent to traverse the
-    #                          specified edge at the specified timestep
-    #           Choose the agent randomly
-    
     # Randomly select one agent as "agent1" and the other as "agent2"
     agent_selector = random.randrange(0, 2)
     agent1_local_id = agent_selector # Local id, i.e. first or second agent within this collision only
@@ -99,8 +65,7 @@ def disjoint_splitting(collision):
     
     # Force move away from current location
     constraints1 = [{'agent': agent1_global_id, 'loc': collision['loc'][agent1_local_id], 'timestep': collision['timestep']}]
-    #print(f"agent1: {agent1_local_id}, {agent1_global_id}, {collision['loc'][agent1_local_id]}")
-    #print(f"agent2: {agent2_local_id}, {agent2_global_id}, {collision['loc'][agent2_local_id]}")
+    
     # Constrain all directions but the one in which agent1 is forced into
     for i in range(-1, 2):
         for j in range(-1, 2):
@@ -108,7 +73,7 @@ def disjoint_splitting(collision):
              # Filter out diagonals
             if abs(i) == abs(j): continue
 
-            #print(f"col loc: {collision['loc']}")
+
             loc = (collision['loc'][agent1_local_id][0] + i, collision['loc'][agent1_local_id][1] + j)   
             if loc != collision['loc'][agent2_local_id]:
                 constraints1.append({'agent': agent1_global_id, 'loc': loc, 'timestep': collision['timestep']})
@@ -116,7 +81,6 @@ def disjoint_splitting(collision):
     # Prevent agent2 from moving over the edge or into the vertex into which agent1 moves
     constraint2 = [{'agent': agent2_global_id, 'loc': collision['loc'][::-1 if agent2_local_id else 1], 'timestep': collision['timestep']}]
     
-    #print(f"constraints: {constraints1 + constraint2}")
     # Return complete list of constraints
     return constraints1 + constraint2
     
@@ -157,12 +121,10 @@ class CBSCLSolver(object):
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        #print("Generate node {}".format(self.num_of_generated))
         self.num_of_generated += 1
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
-        #print("Expand node {}".format(id))
         self.num_of_expanded += 1
         return node
 
@@ -217,16 +179,12 @@ class CBSCLSolver(object):
                 
             # Retrieve open node and remove it from list
             p = self.pop_node()
-            #print(f"Original paths: {p['paths']}")
 
             # Detect collisions between all agents
             p['collisions'] = detect_collisions(p['paths'][-1])
-            #print(f"pre-replan path: {p['paths']}")
-            #print(f"#collisions: { len(p['collisions'])}")
-            #print(f"last collision: {p['collisions']}")
-
             # Return current paths if no collisions were detected between them
             if not p['collisions']: 
+                #  these commented out lines can plot out the number of open nodes that cbs has opened over time
                 # plt.plot(time_history, open_history, label='open list length')
                 # plt.xlabel('time (s)')
                 # plt.ylabel('open list length')
@@ -239,12 +197,8 @@ class CBSCLSolver(object):
 
             # Generate constraints for the two involved agents based on the selected collisions
             constraints = disjoint_splitting(collision) if disjoint else standard_splitting(collision)
-            #print(f"new constraints: {constraints}")
-
-
 
             # Iterate through all constraints generated
-            #agent_selector = random.randrange(0, 2)
             for new_constraint in constraints: #[constraints[agent_selector]]:
 
                 open_list_length = len(self.open_list)
@@ -256,8 +210,6 @@ class CBSCLSolver(object):
                 q = {
                     'constraints': p['constraints'].copy() + [new_constraint]
                 }
-
-                
 
                 # Retrieve index of agent for which the current constraint was generated
                 agent = new_constraint['agent']

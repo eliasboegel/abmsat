@@ -32,7 +32,6 @@ class Animation:
         self.fig = plt.figure(num=1,frameon=False, figsize=(4 * aspect, 4))
         self.ax = self.fig.add_subplot(111, aspect='equal')
         self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=None, hspace=None)
-        # self.ax.set_frame_on(False)
 
         self.patches = []
         self.artists = []
@@ -76,38 +75,15 @@ class Animation:
 
             plt.plot(x,y, linewidth=11.5, alpha=0.13, color='red')
 
-    # def animate_continuously(self):
         self.animation = animation.FuncAnimation(self.fig, self.animate_func,
                                                  init_func=self.init_func,
                                                  frames=int(self.T + 5) * 10,
                                                  interval=18,
                                                  blit=True)
-        # self.animation.save('anim.gif', writer='imagemagick',fps=35)
-    # def animate_once(self, pathh):
-    #     plt.ion()
-    #     self.paths = pathh
-    #     self.animation = animation.FuncAnimation(self.fig, self.animate_func,
-    #                                              init_func=self.init_func,
-    #                                              frames=int(self.T + 1) * 10,
-    #                                              interval=8,
-    #                                              blit=True,
-    #                                              repeat=False)
-                                                 
-                            
         
-    #     plt.pause(1)
-    #     self.patches = []
-    #     self.artists = []
-    #     self.agents = dict()
-    #     self.agent_names = dict()
-    #     self.paths = []
-
+   
     def save(self, file_name, speed):
-        self.animation.save(
-            file_name,
-            fps=10 * speed,
-            dpi=200,
-            savefig_kwargs={"pad_inches": 0, "bbox_inches": "tight"})
+        self.animation.save('anim.gif', writer='imagemagick',fps=35)
 
     @staticmethod
     def show():

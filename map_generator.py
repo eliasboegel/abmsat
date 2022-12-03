@@ -3,6 +3,7 @@ import numpy as np, timeit
 
 class CreateMaps(object):
     def __init__(self, file_name, agent_counts, input_string, sample_count):
+        """Class to create a set number of map files with a given number of agents and a given map number"""
         self.file_name = file_name
         self.input_string = input_string
         
@@ -61,6 +62,7 @@ class CreateMaps(object):
 
 use_maps = ["map1","map2","map3"]
 
+# Creating all the experiment map text files
 for use_map in use_maps:
     skeletons = {
         "map1": "instances/map1_skeleton.txt",
