@@ -9,7 +9,7 @@ This git repo contains implementations of several path planners that are used to
 
 To run the code, clone this repository onto your local machine. Open command prompt at the directory where you cloned the repo, and run the command:
 
-'python run_experiments.py --solver solver_of_choice --instances instance_of_choice *--hvals(optional) old_or_goals*'
+`python run_experiments.py --solver solver_of_choice --instances instance_of_choice *--hvals(optional) old_or_goals*`
 
 Below is a gif demonstrating the CBS cycle limited solver solving a sliding puzzle, with each puzzle piece being an agent.
 
