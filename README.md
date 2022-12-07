@@ -9,7 +9,7 @@ This git repo contains implementations of several path planners that are used to
 
 To run the code, clone this repository onto your local machine. Open command prompt at the directory where you cloned the repo, and run the command:
 
-`python run_experiments.py --solver solver_of_choice --instances instance_of_choice --hvals heuristic_of_choice(optional)`
+`python run_experiments.py --solver solver_of_choice --instance instance_of_choice --hvals heuristic_of_choice(optional)`
 
 For solver_of_choice you can enter any of the following solvers: 
 
