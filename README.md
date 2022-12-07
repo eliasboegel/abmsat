@@ -9,8 +9,24 @@ This git repo contains implementations of several path planners that are used to
 
 To run the code, clone this repository onto your local machine. Open command prompt at the directory where you cloned the repo, and run the command:
 
-`python run_experiments.py --solver solver_of_choice --instances instance_of_choice *--hvals(optional) old_or_goals*`
+`python run_experiments.py --solver solver_of_choice --instances instance_of_choice --hvals heuristic_of_choice(optional)`
 
-Below is a gif demonstrating the CBS cycle limited solver solving a sliding puzzle, with each puzzle piece being an agent.
+For solver_of_choice you can enter any of the following solvers: 
+
+- `Independent` (picks the independent solver, has no collision avoidance)
+- `Prioritized` (picks the Prioritized A* solver)
+- `CBS`         (picks the conflict based search solver) 
+- `CBSCL`       (picks the conflict based search with cycle limiting solver) 
+- `Distributed` (picks the distributed planning solver)
+
+For instance_of_choice you can enter the path to the text file containing the map of your choice, a large collection of maps are presente already in the \instances\ directory. And example of instance_of_choice is:
+
+- `instances\map1.txt`
+
+For heuristics_of_choice, note this is an optional argument, but you can pick to enter either:
+- `old` (picks the old heuristics map)
+- `goals` (picks the heursitics map with extra costs on goal cells)
+
+## Below is a gif demonstrating the CBS cycle limited solver solving a sliding puzzle, with each puzzle piece being an agent.
 
 ![sliding_puzzle_1](https://user-images.githubusercontent.com/65394178/201221764-6fe19081-493b-41df-993d-4440e71d35ca.gif)
