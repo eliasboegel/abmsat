@@ -19,7 +19,7 @@ For solver_of_choice you can enter any of the following solvers:
 - `CBSCL`       (picks the conflict based search with cycle limiting solver) 
 - `Distributed` (picks the distributed planning solver)
 
-For instance_of_choice you can enter the path to the text file containing the map of your choice, a large collection of maps are presente already in the \instances\ directory. And example of instance_of_choice is:
+For instance_of_choice you can enter the path to the text file containing the map of your choice, a large collection of maps are presente already in the \instances\ directory. An example of instance_of_choice is:
 
 - `instances\map1.txt`
 
