@@ -27,6 +27,9 @@ For heuristics_of_choice, note this is an optional argument, but you can pick to
 - `old` (picks the old heuristics map)
 - `goals` (picks the heursitics map with extra costs on goal cells)
 
+Example:
+`python run_experiments.py --solver Distributed --instance instances\map1.txt`
+
 ## Below is a gif demonstrating the CBS cycle limited solver solving a sliding puzzle, with each puzzle piece being an agent.
 
 ![sliding_puzzle_1](https://user-images.githubusercontent.com/65394178/201221764-6fe19081-493b-41df-993d-4440e71d35ca.gif)
